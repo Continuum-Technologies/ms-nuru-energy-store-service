@@ -1,0 +1,78 @@
+enum QuotationStatus {
+  NEW_REQUEST
+  UNDER_REVIEW
+  MORE_INFO_REQUIRED
+  SITE_ASSESSMENT_REQUIRED
+  PREPARING_QUOTATION
+  QUOTATION_SENT
+  CUSTOMER_REVIEWING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CONVERTED_TO_ORDER
+  CANCELLED
+
+  @@schema("nuru")
+}
+
+model Quotation {
+  id              String    @id @default(cuid())
+  quotationNumber String    @unique
+  customer        Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId      String?
+
+  guestName  String?
+  guestPhone String?
+  guestEmail String?
+
+  status                  QuotationStatus @default(NEW_REQUEST)
+  intendedUse             String?
+  installationRequired    Boolean         @default(false)
+  budgetRange             String?
+  preferredCompletionDate DateTime?
+  customerNotes           String?
+
+  subtotal           Decimal? @db.Decimal(12, 2)
+  discountTotal      Decimal? @db.Decimal(12, 2)
+  installationCharge Decimal? @db.Decimal(12, 2)
+  deliveryCharge     Decimal? @db.Decimal(12, 2)
+  taxTotal           Decimal? @db.Decimal(12, 2)
+  total              Decimal? @db.Decimal(12, 2)
+
+  termsAndConditions String?
+  expiresAt          DateTime?
+
+  preparedBy   AdminUser? @relation("QuotationPreparedBy", fields: [preparedById], references: [id], onDelete: SetNull)
+  preparedById String?
+
+  items QuotationItem[]
+  // A quotation converts into an order through the orders module's own API
+  // (CLAUDE.md module-boundary rule) — this relation just lets us look up the
+  // resulting order once that conversion has happened.
+  order Order?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@map("quotations")
+  @@schema("nuru")
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  quotationId String
+  product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId   String?
+
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  lineTotal   Decimal @db.Decimal(12, 2)
+
+  @@index([quotationId])
+  @@map("quotation_items")
+  @@schema("nuru")
+}

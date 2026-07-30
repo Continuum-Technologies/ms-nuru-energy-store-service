@@ -1,0 +1,20 @@
+// Append-only. Never editable through the standard admin UI (CLAUDE.md §4/§9) —
+// no update path is exposed by design; only inserts and reads.
+model AuditLog {
+  id            String     @id @default(cuid())
+  actor         AdminUser? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId       String?
+  action        String
+  entityType    String
+  entityId      String
+  previousValue Json?
+  newValue      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime   @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("audit_logs")
+  @@schema("nuru")
+}

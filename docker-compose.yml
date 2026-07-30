@@ -1,0 +1,13 @@
+services:
+  rustfs:
+    image: rustfs/rustfs:latest
+    user: "root"
+    ports:
+      - "9000:9000" # S3-compatible API
+      - "9001:9001" # Web console (http://localhost:9001, rustfsadmin/rustfsadmin by default)
+    environment:
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+    volumes:
+      - ./.rustfs/data:/data
+      - ./.rustfs/logs:/logs

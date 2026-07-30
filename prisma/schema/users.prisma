@@ -1,0 +1,55 @@
+// Staff accounts and sessions. RBAC is a fixed enum + a code-side permission
+// matrix (see src/lib/permissions.ts), not DB Role/Permission tables — see
+// CLAUDE.md "Implementation conventions" for the rationale.
+
+enum StaffRole {
+  OWNER
+  ADMINISTRATOR
+  SALES
+  INVENTORY
+  CONTENT
+
+  @@schema("nuru")
+}
+
+model AdminUser {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  passwordHash        String
+  role                StaffRole
+  isActive            Boolean   @default(true)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  sessions           Session[]
+  auditLogs          AuditLog[]           @relation("AuditLogActor")
+  inventoryMovements InventoryMovement[]  @relation("InventoryMovementPerformedBy")
+  assignedOrders     Order[]              @relation("OrderAssignee")
+  orderStatusChanges OrderStatusHistory[] @relation("OrderStatusChangedBy")
+  recordedPayments   Payment[]            @relation("PaymentRecordedBy")
+  preparedQuotations Quotation[]          @relation("QuotationPreparedBy")
+
+  @@map("admin_users")
+  @@schema("nuru")
+}
+
+// Raw session token lives only in an httpOnly cookie; tokenHash (SHA-256) is
+// what's stored here, so a DB leak alone can't be replayed as a valid session.
+model Session {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  adminUserId String
+  userAgent   String?
+  ipAddress   String?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([adminUserId])
+  @@map("sessions")
+  @@schema("nuru")
+}

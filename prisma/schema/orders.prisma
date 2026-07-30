@@ -1,0 +1,104 @@
+enum OrderStatus {
+  NEW
+  AWAITING_CONFIRMATION
+  AWAITING_PAYMENT
+  PAYMENT_VERIFICATION_REQUIRED
+  PAID
+  CONFIRMED
+  PROCESSING
+  READY_FOR_COLLECTION
+  READY_FOR_DISPATCH
+  DISPATCHED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+
+  @@schema("nuru")
+}
+
+model Order {
+  id          String    @id @default(cuid())
+  orderNumber String    @unique
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId  String?
+
+  guestName  String?
+  guestPhone String?
+  guestEmail String?
+
+  county               String?
+  town                 String?
+  deliveryLocation     String?
+  deliveryInstructions String?
+
+  status             OrderStatus @default(NEW)
+  subtotal           Decimal     @db.Decimal(12, 2)
+  discountTotal      Decimal     @default(0) @db.Decimal(12, 2)
+  deliveryCharge     Decimal     @default(0) @db.Decimal(12, 2)
+  installationCharge Decimal     @default(0) @db.Decimal(12, 2)
+  taxTotal           Decimal     @default(0) @db.Decimal(12, 2)
+  total              Decimal     @db.Decimal(12, 2)
+
+  customerNotes String?
+  internalNotes String?
+
+  quotation   Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  quotationId String?    @unique
+
+  assignedEmployee   AdminUser? @relation("OrderAssignee", fields: [assignedEmployeeId], references: [id], onDelete: SetNull)
+  assignedEmployeeId String?
+
+  items              OrderItem[]
+  statusHistory      OrderStatusHistory[]
+  payments           Payment[]
+  inventoryMovements InventoryMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@map("orders")
+  @@schema("nuru")
+}
+
+// Snapshot fields (productName/productSku/unitPrice) are frozen at time of
+// purchase — later edits to Product must never change historical order data
+// (CLAUDE.md §4). productId is kept for convenience joins but is nullable
+// since the product row itself could later be archived/deleted.
+model OrderItem {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId String?
+
+  productName String
+  productSku  String
+  unitPrice   Decimal @db.Decimal(12, 2)
+  quantity    Int
+  discount    Decimal @default(0) @db.Decimal(12, 2)
+  lineTotal   Decimal @db.Decimal(12, 2)
+
+  @@index([orderId])
+  @@map("order_items")
+  @@schema("nuru")
+}
+
+model OrderStatusHistory {
+  id          String       @id @default(cuid())
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     String
+  fromStatus  OrderStatus?
+  toStatus    OrderStatus
+  changedBy   AdminUser?   @relation("OrderStatusChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+  changedById String?
+  note        String?
+  createdAt   DateTime     @default(now())
+
+  @@index([orderId])
+  @@map("order_status_history")
+  @@schema("nuru")
+}

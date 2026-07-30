@@ -1,0 +1,106 @@
+/*
+  Central theme file — the only place design tokens (color, radius, shadow, font)
+  should be defined. Components must consume these via Tailwind utilities
+  (e.g. `bg-brand-600`, `text-danger-700`, `rounded-card`) — never hard-code a hex
+  value or px measurement in a component. Changing the brand palette, or swapping
+  light/dark values, should only ever require editing this file.
+*/
+
+/* ---- Static palette: generates bg-, text- and border- color utilities ---- */
+@theme {
+  /* Brand — solar/energy amber-orange. Primary CTAs, links, focus rings, active nav. */
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+  --color-brand-950: #431407;
+
+  /* Neutral — slate scale for text, surfaces, borders in both themes. */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /*
+    Semantic status colors — the single source of truth for every status badge
+    (order, payment, quotation, stock). Modules map their own status enums onto
+    these four (e.g. "paid" / "in-stock" / "accepted" -> success; "low-stock" /
+    "pending" -> warning), they never invent new status colors of their own.
+  */
+  --color-success-50: #f0fdf4;
+  --color-success-200: #bbf7d0;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+
+  --color-warning-50: #fefce8;
+  --color-warning-200: #fef08a;
+  --color-warning-600: #ca8a04;
+  --color-warning-700: #a16207;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-200: #fecaca;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  --color-info-50: #eff6ff;
+  --color-info-200: #bfdbfe;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* Radius — use these instead of ad-hoc rounded-[Npx] in components. */
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+  --radius-pill: 9999px;
+
+  /* Shadow — reusable elevation for cards, dropdowns, modals. */
+  --shadow-card: 0 1px 2px rgba(2, 6, 23, 0.06), 0 1px 3px rgba(2, 6, 23, 0.1);
+  --shadow-popover: 0 4px 6px rgba(2, 6, 23, 0.07), 0 10px 15px rgba(2, 6, 23, 0.1);
+
+  /* Fonts — mapped to the next/font variables applied on <html> in app/layout.tsx. */
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* ---- Light/dark runtime aliases: background, foreground, surface, border ---- */
+:root {
+  --background: var(--color-neutral-0);
+  --foreground: var(--color-neutral-900);
+  --surface: var(--color-neutral-50);
+  --surface-muted: var(--color-neutral-100);
+  --border: var(--color-neutral-200);
+  --ring: var(--color-brand-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--color-neutral-950);
+    --foreground: var(--color-neutral-50);
+    --surface: var(--color-neutral-900);
+    --surface-muted: var(--color-neutral-800);
+    --border: var(--color-neutral-800);
+    --ring: var(--color-brand-400);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+}

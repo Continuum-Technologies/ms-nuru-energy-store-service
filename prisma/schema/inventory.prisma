@@ -1,0 +1,64 @@
+enum InventoryMovementType {
+  OPENING_STOCK
+  STOCK_RECEIVED
+  SALE
+  ORDER_RESERVATION
+  RESERVATION_RELEASED
+  CUSTOMER_RETURN
+  SUPPLIER_RETURN
+  DAMAGED_STOCK
+  LOST_STOCK
+  MANUAL_ADJUSTMENT
+  STOCK_COUNT_CORRECTION
+  ORDER_CANCELLATION
+
+  @@schema("nuru")
+}
+
+// Inventory owns stock — Product never carries bare quantity columns. The
+// orders module must go through this module to reserve/release stock rather
+// than writing quantities directly (CLAUDE.md module-boundary rule).
+model InventoryItem {
+  id                String    @id @default(cuid())
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId         String    @unique
+  quantityOnHand    Int       @default(0)
+  reservedQuantity  Int       @default(0)
+  reorderLevel      Int       @default(0)
+  lowStockThreshold Int       @default(0)
+  allowBackorder    Boolean   @default(false)
+  lastCountedAt     DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  movements InventoryMovement[]
+
+  @@map("inventory_items")
+  @@schema("nuru")
+}
+
+// Every stock change is an immutable row here — quantity is derived/audited,
+// never silently overwritten (CLAUDE.md §4).
+model InventoryMovement {
+  id               String                @id @default(cuid())
+  inventoryItem    InventoryItem         @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  inventoryItemId  String
+  product          Product               @relation(fields: [productId], references: [id])
+  productId        String
+  type             InventoryMovementType
+  quantityChange   Int
+  previousQuantity Int
+  newQuantity      Int
+  reason           String?
+  reference        String?
+  order            Order?                @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderId          String?
+  performedBy      AdminUser?            @relation("InventoryMovementPerformedBy", fields: [performedById], references: [id], onDelete: SetNull)
+  performedById    String?
+  createdAt        DateTime              @default(now())
+
+  @@index([inventoryItemId])
+  @@index([productId])
+  @@index([orderId])
+  @@map("inventory_movements")
+  @@schema("nuru")
+}

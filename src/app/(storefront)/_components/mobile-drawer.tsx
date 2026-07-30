@@ -1,0 +1,158 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Menu, X, Zap, Phone, ShoppingBag, FileText, ChevronRight, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface NavCategory {
+  label: string;
+  href: string;
+}
+
+const CATEGORY_LINKS: NavCategory[] = [
+  { label: "Solar Panels", href: "/shop?category=solar-panels" },
+  { label: "Solar Batteries", href: "/shop?category=solar-batteries" },
+  { label: "Inverters & Off-Grid", href: "/shop?category=inverters" },
+  { label: "Generators & Engines", href: "/shop?category=generators" },
+  { label: "Water & Borehole Pumps", href: "/shop?category=water-pumps" },
+  { label: "Accessories & Cables", href: "/shop?category=accessories" },
+];
+
+const SOLUTION_LINKS: NavCategory[] = [
+  { label: "Home Solar Systems", href: "/solutions/home-solar" },
+  { label: "Farm & Irrigation Solar", href: "/solutions/farm-solar" },
+  { label: "Office & Shop Backup", href: "/solutions/backup-power" },
+  { label: "Water Pumping Solutions", href: "/solutions/water-pumping" },
+];
+
+export function MobileDrawer() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDrawer = () => setIsOpen((prev) => !prev);
+  const closeDrawer = () => setIsOpen(false);
+
+  return (
+    <div className="flex md:hidden">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleDrawer}
+        aria-label="Toggle Navigation Menu"
+        className="h-10 w-10 p-0 text-foreground"
+      >
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </Button>
+
+      {/* A self-contained full-screen overlay with its own top bar, rather
+          than a fixed pixel offset trying to sit below the page header —
+          that coupling would break the moment the header's height changes
+          (e.g. the top contact bar wrapping on a narrow viewport). */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background">
+          <div className="flex items-center justify-between border-b border-border p-4">
+            <span className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Zap className="h-5 w-5 text-brand-600" />
+              Nuru Energy
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={closeDrawer}
+              aria-label="Close navigation menu"
+              className="h-9 w-9 p-0 text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="flex flex-1 flex-col overflow-y-auto p-5 pb-24">
+            {/* Direct Contact Banner */}
+            <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-brand-500/20 bg-brand-500/5 p-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                Talk to an Energy Expert
+              </span>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                Get technical advice or custom equipment recommendations for your project.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <a
+                  href="tel:+254700000000"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-control border border-border bg-surface py-2 text-xs font-semibold text-foreground shadow-2xs"
+                >
+                  <Phone className="h-3.5 w-3.5 text-brand-600" />
+                  Call Us
+                </a>
+                <a
+                  href="https://wa.me/254700000000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-control bg-success-600 py-2 text-xs font-semibold text-white shadow-2xs"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+
+            {/* Equipment Categories */}
+            <div className="mb-6 flex flex-col gap-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+                Equipment Categories
+              </span>
+              <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/70 bg-surface/50">
+                {CATEGORY_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={closeDrawer}
+                    className="flex items-center justify-between p-3 text-sm font-medium text-foreground transition-colors hover:text-brand-600"
+                  >
+                    <span>{link.label}</span>
+                    <ChevronRight className="h-4 w-4 text-neutral-400" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Solar & Power Solutions */}
+            <div className="mb-6 flex flex-col gap-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+                Shop By Solution
+              </span>
+              <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/70 bg-surface/50">
+                {SOLUTION_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={closeDrawer}
+                    className="flex items-center justify-between p-3 text-sm font-medium text-foreground transition-colors hover:text-brand-600"
+                  >
+                    <span>{link.label}</span>
+                    <ChevronRight className="h-4 w-4 text-neutral-400" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Core Action Links */}
+            <div className="flex flex-col gap-2 pt-2">
+              <Link href="/request-quotation" onClick={closeDrawer}>
+                <Button className="w-full justify-start gap-2 text-sm font-semibold">
+                  <FileText className="h-4 w-4" />
+                  Request a Custom Quotation
+                </Button>
+              </Link>
+              <Link href="/cart" onClick={closeDrawer}>
+                <Button variant="outline" className="w-full justify-start gap-2 text-sm font-semibold">
+                  <ShoppingBag className="h-4 w-4" />
+                  View Shopping Cart
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
