@@ -378,7 +378,7 @@ in `src/lib/cn.ts` (clsx + tailwind-merge). Extend these before writing a new
 one-off component — see §5.
 
 **Colors: theme tokens only, never a raw Tailwind color name.** This has caused
-real bugs twice — code that reached for `amber-500`, `emerald-600`, `sky-400`,
+real bugs three times — code that reached for `amber-500`, `emerald-600`, `sky-400`,
 `purple-500`, etc. directly instead of this project's tokens, producing
 inconsistent one-off palettes per file and at least one silently-broken class
 (`dark:hover:bg-danger-950` — that shade was never defined, so the rule simply
@@ -391,6 +391,11 @@ the semantic `background`/`foreground`/`surface`/`surface-muted`/`border`/`ring`
 aliases. If a design calls for a color outside this set, add it to `styles/theme.css`
 first (see §5.1's theme-file header comment) — don't reach for a stock Tailwind hue
 as a shortcut.
+
+Documentation alone didn't stop this recurring, so `npm run lint` now also runs
+`scripts/check-theme-colors.mjs`, which fails the build if any raw Tailwind color
+utility (`amber-500`, `sky-400`, etc.) shows up anywhere in `src/`. If this check
+ever fails, fix the offending class — don't loosen or remove the script.
 
 **No fabricated data or unverified claims.** Don't hardcode a status indicator that
 can't reflect reality (e.g. an always-on "Live"/"Online" badge with nothing behind
@@ -446,3 +451,47 @@ module's lightweight initial-stock form on the product edit page
 isn't the dedicated Inventory module (receiving, reservations, damage) that
 comes later, but the audit-trail invariant from §4 applies from day one
 regardless of which module is writing the change.
+
+**Public catalog reads go through `src/modules/catalog/queries.ts`, never an
+inline `db.product.findMany(...)` in a storefront page.** Admin pages query
+the database directly because the owner needs to see every status, including
+drafts. The storefront must never do that — every function in `queries.ts`
+(`getPublishedProducts`, `getProductBySlug`, `getActiveCategories`,
+`getCategoryBySlug`, `getActiveBrands`, `getBrandBySlug`, and the
+slug-only `get*Slugs` variants for `sitemap.ts`) hard-codes the
+`status: "ACTIVE"` / `isActive: true` filter, so a draft, hidden, archived, or
+deactivated row can never leak onto a public page — a missing/non-active
+slug resolves to `null`, which the calling page turns into `notFound()`.
+Adding a new public catalog query means adding a function here with the same
+guard, not querying `db` directly from `app/(storefront)`.
+
+**Availability, not raw stock, is public** (§4) is enforced by one function:
+`getAvailabilityStatus()` in `src/lib/inventory-status.ts` derives
+`IN_STOCK`/`LOW_STOCK`/`OUT_OF_STOCK`/`AVAILABLE_ON_REQUEST` from
+`quantityOnHand`/`reservedQuantity`/`lowStockThreshold`/`allowBackorder` —
+nothing in `app/(storefront)` should read those raw `InventoryItem` fields
+itself. `StockBadge` (`src/components/ui/stock-badge.tsx`) renders the result
+as a `Badge`.
+
+**`PriceDisplay` and `StockBadge`** (`src/components/ui/`) are the second
+consumer proving the §5 "promote to `components/ui` once a second module
+needs it" rule in practice: both were built for the storefront product grid
+and detail page, but live in the shared UI kit (not `app/(storefront)/`)
+because the admin product list/edit pages are an equally valid future
+consumer of the same price-formatting and stock-status logic.
+
+**The storefront product grid is one component, reused by four routes**:
+`/shop`, `/categories/[slug]`, `/brands/[slug]`, and `/search` all render
+`ProductGrid` + `ProductFilters` + `Pagination`
+(`src/app/(storefront)/_components/`) — only the pre-applied filter (fixed
+category, fixed brand, search term, or none) and the page's own banner/SEO
+metadata differ per route. Don't fork the grid or filter markup per route;
+add a new filter dimension to `ProductListFilters`
+(`src/modules/catalog/queries.ts`) and `ProductFilters` instead.
+
+**Filter/sort/page state lives in the URL, never client React state** — every
+filter control in `ProductFilters` and `Pagination` is a `<Link>` or a native
+GET `<form>`, so `/shop?category=...&sort=...&page=...` is always the single
+source of truth (shareable, bookmarkable, crawlable per §10). If a new filter
+is added, thread it through the URL the same way rather than reaching for
+`useState`.

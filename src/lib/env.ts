@@ -11,6 +11,7 @@ const envSchema = z.object({
   RUSTFS_SECRET_KEY: z.string().min(1, "RUSTFS_SECRET_KEY is required"),
   RUSTFS_BUCKET: z.string().min(1, "RUSTFS_BUCKET is required"),
   RUSTFS_PUBLIC_URL: z.string().min(1, "RUSTFS_PUBLIC_URL is required"),
+  SITE_URL: z.string().min(1).default("http://localhost:3000"),
 });
 
 export const env = envSchema.parse({
@@ -22,4 +23,5 @@ export const env = envSchema.parse({
   RUSTFS_SECRET_KEY: process.env.RUSTFS_SECRET_KEY,
   RUSTFS_BUCKET: process.env.RUSTFS_BUCKET,
   RUSTFS_PUBLIC_URL: process.env.RUSTFS_PUBLIC_URL,
+  SITE_URL: process.env.SITE_URL,
 });

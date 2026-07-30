@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import type { ChangeEvent } from "react";
+import Image from "next/image";
 import { Upload, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -73,8 +74,14 @@ export function ImagesSection({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {images.map((image) => (
               <div key={image.id} className="group relative overflow-hidden rounded-control border border-border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image.url} alt={image.altText ?? ""} className="aspect-square w-full object-cover" />
+                <Image
+                  src={image.url}
+                  alt={image.altText ?? ""}
+                  width={200}
+                  height={200}
+                  unoptimized
+                  className="aspect-square w-full object-cover"
+                />
                 {image.isPrimary && (
                   <span className="absolute left-1.5 top-1.5 rounded-pill bg-brand-600 px-2 py-0.5 text-[10px] font-semibold text-white">
                     Primary

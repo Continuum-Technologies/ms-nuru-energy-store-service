@@ -10,15 +10,6 @@ interface NavCategory {
   href: string;
 }
 
-const CATEGORY_LINKS: NavCategory[] = [
-  { label: "Solar Panels", href: "/shop?category=solar-panels" },
-  { label: "Solar Batteries", href: "/shop?category=solar-batteries" },
-  { label: "Inverters & Off-Grid", href: "/shop?category=inverters" },
-  { label: "Generators & Engines", href: "/shop?category=generators" },
-  { label: "Water & Borehole Pumps", href: "/shop?category=water-pumps" },
-  { label: "Accessories & Cables", href: "/shop?category=accessories" },
-];
-
 const SOLUTION_LINKS: NavCategory[] = [
   { label: "Home Solar Systems", href: "/solutions/home-solar" },
   { label: "Farm & Irrigation Solar", href: "/solutions/farm-solar" },
@@ -26,7 +17,12 @@ const SOLUTION_LINKS: NavCategory[] = [
   { label: "Water Pumping Solutions", href: "/solutions/water-pumping" },
 ];
 
-export function MobileDrawer() {
+export interface MobileDrawerProps {
+  categoryLinks: NavCategory[];
+}
+
+/** Category links are passed in from the (server) header, which queries them live — this stays a client component only for the open/close state. */
+export function MobileDrawer({ categoryLinks }: Readonly<MobileDrawerProps>) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDrawer = () => setIsOpen((prev) => !prev);
@@ -101,7 +97,7 @@ export function MobileDrawer() {
                 Equipment Categories
               </span>
               <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/70 bg-surface/50">
-                {CATEGORY_LINKS.map((link) => (
+                {categoryLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

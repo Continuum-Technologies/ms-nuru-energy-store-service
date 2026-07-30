@@ -8,10 +8,14 @@ export default async function NewBrandPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Add brand</h1>
-        <p className="text-sm text-neutral-500">Add a new equipment manufacturer.</p>
+        <h1 className="text-xl font-bold text-foreground">Add Equipment Manufacturer</h1>
+        <p className="text-sm text-neutral-500">Register a new solar or power equipment brand partner.</p>
       </div>
-      <BrandForm action={createBrand} />
+      <BrandForm
+        action={createBrand}
+        cancelHref="/admin/brands"
+        submitLabel="Add Equipment Manufacturer"
+      />
     </div>
   );
 }

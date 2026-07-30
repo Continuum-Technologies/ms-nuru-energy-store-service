@@ -43,7 +43,7 @@ export function UnderDevelopment({
       <Card className="overflow-hidden border-border/80 shadow-card">
         <CardHeader className="border-b border-border/60 bg-surface/40 px-6 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning-50 text-warning-700 dark:bg-warning-600/15 dark:text-warning-200 shadow-xs">
               <Wrench className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
@@ -59,7 +59,7 @@ export function UnderDevelopment({
 
         <CardContent className="flex flex-col gap-6 p-6 sm:p-8">
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface-muted/40 p-8 text-center sm:p-12">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-warning-50 text-warning-700 dark:bg-warning-600/15 dark:text-warning-200">
               <Construction className="h-7 w-7" />
             </div>
             <h3 className="mt-4 text-lg font-bold text-foreground">Feature Under Active Development</h3>

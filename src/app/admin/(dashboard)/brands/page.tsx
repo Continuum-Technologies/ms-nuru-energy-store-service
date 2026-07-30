@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Factory, Star, CheckCircle2, Globe } from "lucide-react";
 import { db } from "@/infrastructure/database/client";
 import { requirePermissionOrRedirect } from "@/lib/permissions";
 import { deleteBrand } from "@/modules/catalog/brands/actions";
@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
+import { KpiCard } from "@/components/ui/kpi-card";
 import { DeleteRowButton } from "@/app/admin/(dashboard)/_components/delete-row-button";
 
 interface BrandRow {
@@ -14,41 +15,77 @@ interface BrandRow {
   name: string;
   slug: string;
   countryOfOrigin: string | null;
+  websiteUrl: string | null;
   isActive: boolean;
+  isFeatured: boolean;
   productCount: number;
+}
+
+async function getBrandStats() {
+  const [total, featured, active] = await Promise.all([
+    db.brand.count(),
+    db.brand.count({ where: { isFeatured: true } }),
+    db.brand.count({ where: { isActive: true } }),
+  ]);
+  return { total, featured, active };
 }
 
 export default async function BrandsPage() {
   await requirePermissionOrRedirect("brands.manage");
 
-  const brands = await db.brand.findMany({
-    include: { _count: { select: { products: true } } },
-    orderBy: { name: "asc" },
-  });
+  const [brands, stats] = await Promise.all([
+    db.brand.findMany({
+      include: { _count: { select: { products: true } } },
+      orderBy: { name: "asc" },
+    }),
+    getBrandStats(),
+  ]);
 
   const rows: BrandRow[] = brands.map((brand) => ({
     id: brand.id,
     name: brand.name,
     slug: brand.slug,
     countryOfOrigin: brand.countryOfOrigin,
+    websiteUrl: brand.websiteUrl,
     isActive: brand.isActive,
+    isFeatured: brand.isFeatured,
     productCount: brand._count.products,
   }));
 
   const columns: DataListColumn<BrandRow>[] = [
     {
       key: "name",
-      header: "Brand",
+      header: "Brand / Manufacturer",
       hideOnMobile: true,
       render: (row) => (
-        <Link href={`/admin/brands/${row.id}/edit`} className="font-medium text-foreground hover:text-brand-600">
-          {row.name}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href={`/admin/brands/${row.id}/edit`} className="font-semibold text-foreground hover:text-brand-600">
+            {row.name}
+          </Link>
+          {row.isFeatured && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-warning-50 px-2 py-0.5 text-[10px] font-bold text-warning-700 dark:bg-warning-600/15 dark:text-warning-200 border border-warning-200/50">
+              <Star className="h-3 w-3 fill-current" />
+              Featured
+            </span>
+          )}
+        </div>
       ),
     },
-    { key: "slug", header: "Slug", render: (row) => <span className="text-neutral-500">{row.slug}</span> },
-    { key: "origin", header: "Origin", render: (row) => row.countryOfOrigin ?? "—" },
-    { key: "products", header: "Products", render: (row) => row.productCount },
+    { key: "slug", header: "Slug", render: (row) => <span className="text-xs font-mono text-neutral-500">{row.slug}</span> },
+    {
+      key: "origin",
+      header: "Country of Origin",
+      render: (row) =>
+        row.countryOfOrigin ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+            <Globe className="h-3.5 w-3.5 text-neutral-400" />
+            {row.countryOfOrigin}
+          </span>
+        ) : (
+          <span className="text-neutral-400">—</span>
+        ),
+    },
+    { key: "products", header: "Catalog Equipment", render: (row) => <span className="font-semibold text-xs">{row.productCount} items</span> },
     {
       key: "status",
       header: "Status",
@@ -73,13 +110,20 @@ export default async function BrandsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Brands</h1>
-          <p className="text-sm text-neutral-500">Manage equipment manufacturers carried in the catalog.</p>
+          <h1 className="text-xl font-bold text-foreground">Equipment Manufacturers</h1>
+          <p className="text-sm text-neutral-500">Manage solar & power equipment brand partners carried in your catalog.</p>
         </div>
-        <Link href="/admin/brands/new" className={buttonVariants({ size: "sm", className: "gap-2" })}>
+        <Link href="/admin/brands/new" className={buttonVariants({ size: "sm", className: "gap-2 font-bold" })}>
           <Plus className="h-4 w-4" />
           Add Brand
         </Link>
+      </div>
+
+      {/* KPI Stat Strip */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <KpiCard title="Total Brands" value={stats.total} subtitle="Equipment Partners" icon={<Factory className="h-4 w-4 sm:h-5 sm:w-5" />} tone="brand" />
+        <KpiCard title="Featured Partners" value={stats.featured} subtitle="Showcased on Homepage" icon={<Star className="h-4 w-4 sm:h-5 sm:w-5" />} tone="warning" />
+        <KpiCard title="Active Brands" value={stats.active} subtitle="Filterable on Storefront" icon={<CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />} tone="success" />
       </div>
 
       <DataList
@@ -90,8 +134,8 @@ export default async function BrandsPage() {
         mobileAccessory={(row) => <Badge tone={row.isActive ? "success" : "neutral"}>{row.isActive ? "Active" : "Hidden"}</Badge>}
         emptyState={
           <EmptyState
-            title="No brands yet"
-            description="Add the manufacturers whose equipment you stock."
+            title="No manufacturers added yet"
+            description="Add equipment manufacturers like Must Solar, Sunsynk, or Victron Energy to stock their products."
             action={
               <Link href="/admin/brands/new" className={buttonVariants({ size: "sm" })}>
                 Add Brand

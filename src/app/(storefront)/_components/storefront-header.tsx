@@ -1,21 +1,29 @@
 import Link from "next/link";
 import { Zap, Phone, Search, ShoppingBag, FileText, MapPin, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getActiveCategories } from "@/modules/catalog/queries";
 import { MobileDrawer } from "./mobile-drawer";
 
-const NAV_CATEGORIES = [
+// Individual categories are browsed via /shop's filter sidebar and the
+// homepage's FeaturedCategories grid, not flattened into this top strip —
+// with a growing category list that overflowed into a horizontal scrollbar.
+// This top-level strip stays a small, fixed set of destinations.
+const NAV_LINKS = [
   { href: "/shop", label: "All Equipment" },
-  { href: "/shop?category=solar-panels", label: "Solar Panels" },
-  { href: "/shop?category=solar-batteries", label: "Batteries" },
-  { href: "/shop?category=inverters", label: "Inverters" },
-  { href: "/shop?category=generators", label: "Generators" },
-  { href: "/shop?category=water-pumps", label: "Water Pumps" },
   { href: "/solutions", label: "Shop by Solution" },
   { href: "/request-quotation", label: "Request Quote" },
   { href: "/contact", label: "Contact Us" },
 ];
 
-export function StorefrontHeader() {
+/** Category links are queried live (for the mobile drawer's category drilldown) so they never point at one that doesn't exist. */
+export async function StorefrontHeader() {
+  const categories = await getActiveCategories();
+  const categoryLinks = categories.map((category) => ({ href: `/categories/${category.slug}`, label: category.name }));
+
+  return <StorefrontHeaderView categoryLinks={categoryLinks} />;
+}
+
+function StorefrontHeaderView({ categoryLinks }: Readonly<{ categoryLinks: { href: string; label: string }[] }>) {
   return (
     <header className="sticky top-0 z-40 w-full flex-col border-b border-border/80 bg-surface/95 backdrop-blur-md">
       {/* Top Utility & Contact Bar */}
@@ -98,14 +106,14 @@ export function StorefrontHeader() {
             </Button>
           </Link>
 
-          <MobileDrawer />
+          <MobileDrawer categoryLinks={categoryLinks} />
         </div>
       </div>
 
-      {/* Category Navigation Strip */}
+      {/* Primary Navigation Strip */}
       <nav className="hidden border-t border-border/60 bg-surface-muted/40 md:block">
-        <div className="mx-auto flex max-w-[1536px] items-center gap-6 overflow-x-auto px-4 py-2.5 text-xs font-semibold sm:px-8">
-          {NAV_CATEGORIES.map((link) => (
+        <div className="mx-auto flex max-w-[1536px] items-center gap-6 px-4 py-2.5 text-xs font-semibold sm:px-8">
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}

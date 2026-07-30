@@ -17,10 +17,10 @@ export default async function NewProductPage() {
   if (categories.length === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-xl font-semibold text-foreground">Add product</h1>
+        <h1 className="text-xl font-bold text-foreground">Add Product</h1>
         <EmptyState
           title="Create a category first"
-          description="Every product needs a category — add one before creating products."
+          description="Every product needs a category — add an equipment category before creating products."
           action={
             <Link href="/admin/categories/new" className={buttonVariants({ size: "sm" })}>
               Add Category
@@ -34,9 +34,9 @@ export default async function NewProductPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Add product</h1>
+        <h1 className="text-xl font-bold text-foreground">Add Product to Catalog</h1>
         <p className="text-sm text-neutral-500">
-          Save the basics first — images, specifications and stock are added after.
+          Enter product details, pricing, delivery options and search metadata.
         </p>
       </div>
       <ProductForm
@@ -44,7 +44,7 @@ export default async function NewProductPage() {
         categories={categories}
         brands={brands}
         cancelHref="/admin/products"
-        submitLabel="Create product"
+        submitLabel="Create Product"
       />
     </div>
   );

@@ -14,10 +14,15 @@ export default async function NewCategoryPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Add category</h1>
-        <p className="text-sm text-neutral-500">Create a new product category.</p>
+        <h1 className="text-xl font-bold text-foreground">Create Product Category</h1>
+        <p className="text-sm text-neutral-500">Add a new equipment category or sub-category to your catalog hierarchy.</p>
       </div>
-      <CategoryForm action={createCategory} parentOptions={parentOptions} />
+      <CategoryForm
+        action={createCategory}
+        parentOptions={parentOptions}
+        cancelHref="/admin/categories"
+        submitLabel="Create Product Category"
+      />
     </div>
   );
 }
