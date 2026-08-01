@@ -4,31 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/infrastructure/database/client";
 import { formatKes } from "@/lib/currency";
-import type { OrderStatus } from "@/generated/prisma/client";
-
-function getStatusBadgeTone(status: OrderStatus): "neutral" | "brand" | "success" | "warning" | "danger" | "info" {
-  switch (status) {
-    case "NEW":
-    case "AWAITING_CONFIRMATION":
-    case "AWAITING_PAYMENT":
-    case "PAYMENT_VERIFICATION_REQUIRED":
-      return "warning";
-    case "PAID":
-    case "CONFIRMED":
-    case "PROCESSING":
-    case "READY_FOR_COLLECTION":
-    case "READY_FOR_DISPATCH":
-    case "DISPATCHED":
-      return "brand";
-    case "DELIVERED":
-    case "COMPLETED":
-      return "success";
-    case "CANCELLED":
-    case "REFUNDED":
-    case "PARTIALLY_REFUNDED":
-      return "danger";
-  }
-}
+import { getOrderStatusTone } from "@/modules/orders/status-tone";
 
 export async function RecentOrdersWidget() {
   const recentOrders = await db.order.findMany({
@@ -85,7 +61,7 @@ export async function RecentOrdersWidget() {
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-foreground">{order.orderNumber}</span>
-                      <Badge tone={getStatusBadgeTone(order.status)} className="text-[10px] font-semibold">
+                      <Badge tone={getOrderStatusTone(order.status)} className="text-[10px] font-semibold">
                         {order.status.replaceAll("_", " ")}
                       </Badge>
                     </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Factory, Star, CheckCircle2, Globe } from "lucide-react";
+import { Plus, Factory, Star, CheckCircle2, Globe, FileEdit, ExternalLink } from "lucide-react";
 import { db } from "@/infrastructure/database/client";
 import { requirePermissionOrRedirect } from "@/lib/permissions";
 import { deleteBrand } from "@/modules/catalog/brands/actions";
@@ -30,8 +30,15 @@ async function getBrandStats() {
   return { total, featured, active };
 }
 
-export default async function BrandsPage() {
+interface BrandsPageProps {
+  searchParams?: Promise<{ page?: string }>;
+}
+
+export default async function BrandsPage({ searchParams }: Readonly<BrandsPageProps>) {
   await requirePermissionOrRedirect("brands.manage");
+
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
 
   const [brands, stats] = await Promise.all([
     db.brand.findMany({
@@ -59,7 +66,7 @@ export default async function BrandsPage() {
       hideOnMobile: true,
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Link href={`/admin/brands/${row.id}/edit`} className="font-semibold text-foreground hover:text-brand-600">
+          <Link href={`/admin/brands/${row.id}/edit`} className="font-semibold text-foreground hover:text-brand-600 transition-colors">
             {row.name}
           </Link>
           {row.isFeatured && (
@@ -95,11 +102,26 @@ export default async function BrandsPage() {
     {
       key: "actions",
       header: "",
+      align: "right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-1">
-          <Link href={`/admin/brands/${row.id}/edit`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            href={`/admin/brands/${row.id}/edit`}
+            className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 px-2 text-xs font-bold gap-1" })}
+          >
+            <FileEdit className="h-3 w-3" />
             Edit
           </Link>
+          <a
+            href={`/brands/${row.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "ghost", size: "sm", className: "h-7 px-2 text-xs font-bold gap-1 text-neutral-500 hover:text-brand-600" })}
+            title="View brand page on storefront"
+          >
+            <ExternalLink className="h-3 w-3" />
+            View
+          </a>
           <DeleteRowButton action={deleteBrand} id={row.id} label="brand" name={row.name} />
         </div>
       ),
@@ -127,6 +149,7 @@ export default async function BrandsPage() {
       </div>
 
       <DataList
+        page={page}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

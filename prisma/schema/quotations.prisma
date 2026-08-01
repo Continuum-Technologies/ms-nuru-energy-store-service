@@ -27,6 +27,8 @@ model Quotation {
 
   status                  QuotationStatus @default(NEW_REQUEST)
   intendedUse             String?
+  propertyType            String?
+  currentPowerSource      String?
   installationRequired    Boolean         @default(false)
   budgetRange             String?
   preferredCompletionDate DateTime?
@@ -39,7 +41,11 @@ model Quotation {
   taxTotal           Decimal? @db.Decimal(12, 2)
   total              Decimal? @db.Decimal(12, 2)
 
+  // Distinct from termsAndConditions per PRD §10.3/§10.4 — three separate
+  // admin-editable fields, three separate PDF sections.
   termsAndConditions String?
+  paymentTerms       String?
+  warrantyInfo       String?
   expiresAt          DateTime?
 
   preparedBy   AdminUser? @relation("QuotationPreparedBy", fields: [preparedById], references: [id], onDelete: SetNull)

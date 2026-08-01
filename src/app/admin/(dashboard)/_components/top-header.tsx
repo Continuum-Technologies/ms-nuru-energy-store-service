@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, Plus, ExternalLink, LogOut } from "lucide-react";
+import { Zap, ExternalLink, LogOut } from "lucide-react";
 import { logout } from "@/modules/users/actions";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/initials";
@@ -48,14 +48,6 @@ export function TopHeader({ user }: Readonly<TopHeaderProps>) {
           <ExternalLink className="h-3 w-3 text-neutral-400" />
         </Link>
 
-        <Link
-          href="/admin/products/new"
-          className="inline-flex items-center gap-1.5 rounded-control bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Add Product</span>
-          <span className="sm:hidden">Add</span>
-        </Link>
 
         {/* Mobile-only identity + sign-out — the sidebar UserPanel covers this on desktop. */}
         <div className="flex items-center gap-1.5 md:hidden">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useImperativeHandle, useRef, type Ref, type ReactNode } from "react";
+import { useImperativeHandle, useRef, useEffect, type Ref, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export interface DialogHandle {
@@ -16,9 +16,8 @@ export interface DialogProps {
   onClose?: () => void;
 }
 
-// Built on the native <dialog> element rather than a portal+focus-trap
-// library — it gives ESC-to-close, focus trapping and ::backdrop styling for
-// free. Consumers open/close it imperatively via the ref.
+// Built on the native <dialog> element. Centered with `fixed inset-0 m-auto h-fit`
+// so Tailwind preflight CSS resets cannot push it to the top-left of the viewport.
 export function Dialog({ ref, title, children, className, onClose }: Readonly<DialogProps>) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -27,26 +26,37 @@ export function Dialog({ ref, title, children, className, onClose }: Readonly<Di
     close: () => dialogRef.current?.close(),
   }));
 
+  // Handle native backdrop click imperatively so JSX accessibility rules (jsx-a11y) are satisfied
+  useEffect(() => {
+    const dialogEl = dialogRef.current;
+    if (!dialogEl) return;
+
+    const handleBackdropClick = (event: MouseEvent) => {
+      if (event.target === dialogEl) {
+        dialogEl.close();
+      }
+    };
+
+    dialogEl.addEventListener("click", handleBackdropClick);
+    return () => dialogEl.removeEventListener("click", handleBackdropClick);
+  }, []);
+
   return (
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) {
-          dialogRef.current?.close();
-        }
-      }}
+      aria-modal="true"
       className={cn(
-        "w-full max-w-md rounded-card border border-border bg-surface p-0 text-foreground shadow-popover backdrop:bg-neutral-950/50",
+        "fixed inset-0 m-auto z-50 h-fit max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-0 text-foreground shadow-2xl backdrop:bg-neutral-950/60 backdrop:backdrop-blur-xs",
         className,
       )}
     >
       {title && (
-        <div className="border-b border-border p-4">
-          <h2 className="text-base font-semibold">{title}</h2>
+        <div className="border-b border-border/80 px-5 py-4">
+          <h2 className="text-base font-extrabold text-foreground tracking-tight">{title}</h2>
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </dialog>
   );
 }

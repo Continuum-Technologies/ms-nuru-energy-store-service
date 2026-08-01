@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FormField } from "@/app/admin/(dashboard)/_components/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Truck } from "lucide-react";
 
 export interface DeliveryValues {

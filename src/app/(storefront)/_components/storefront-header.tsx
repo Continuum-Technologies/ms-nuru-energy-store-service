@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Zap, Phone, Search, ShoppingBag, FileText, MapPin, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getActiveCategories } from "@/modules/catalog/queries";
+import { getCartItemCount } from "@/modules/cart/queries";
 import { MobileDrawer } from "./mobile-drawer";
 
 // Individual categories are browsed via /shop's filter sidebar and the
@@ -17,13 +18,16 @@ const NAV_LINKS = [
 
 /** Category links are queried live (for the mobile drawer's category drilldown) so they never point at one that doesn't exist. */
 export async function StorefrontHeader() {
-  const categories = await getActiveCategories();
+  const [categories, cartItemCount] = await Promise.all([getActiveCategories(), getCartItemCount()]);
   const categoryLinks = categories.map((category) => ({ href: `/categories/${category.slug}`, label: category.name }));
 
-  return <StorefrontHeaderView categoryLinks={categoryLinks} />;
+  return <StorefrontHeaderView categoryLinks={categoryLinks} cartItemCount={cartItemCount} />;
 }
 
-function StorefrontHeaderView({ categoryLinks }: Readonly<{ categoryLinks: { href: string; label: string }[] }>) {
+function StorefrontHeaderView({
+  categoryLinks,
+  cartItemCount,
+}: Readonly<{ categoryLinks: { href: string; label: string }[]; cartItemCount: number }>) {
   return (
     <header className="sticky top-0 z-40 w-full flex-col border-b border-border/80 bg-surface/95 backdrop-blur-md">
       {/* Top Utility & Contact Bar */}
@@ -99,11 +103,16 @@ function StorefrontHeaderView({ categoryLinks }: Readonly<{ categoryLinks: { hre
             </Button>
           </Link>
 
-          <Link href="/cart">
+          <Link href="/cart" className="relative">
             <Button size="sm" className="gap-1.5 font-semibold">
               <ShoppingBag className="h-4 w-4" />
               <span className="hidden sm:inline">Cart</span>
             </Button>
+            {cartItemCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-600 px-1 text-[10px] font-bold text-white">
+                {cartItemCount}
+              </span>
+            )}
           </Link>
 
           <MobileDrawer categoryLinks={categoryLinks} />

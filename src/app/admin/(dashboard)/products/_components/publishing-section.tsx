@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FormField } from "@/app/admin/(dashboard)/_components/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { updateProductStatus } from "@/modules/catalog/products/actions";
 import type { ProductStatus } from "@/generated/prisma/client";
 

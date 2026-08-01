@@ -123,6 +123,7 @@ export default async function ProductPage({ params }: Readonly<ProductPageProps>
 
         <div className="lg:col-span-3">
           <ProductPurchasePanel
+            productId={product.id}
             sellingPrice={sellingPrice}
             previousPrice={previousPrice}
             hidePrice={product.hidePrice}

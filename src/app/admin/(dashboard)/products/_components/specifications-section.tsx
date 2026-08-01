@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FormField } from "@/app/admin/(dashboard)/_components/form-field";
+import { FormField } from "@/components/ui/form-field";
 
 interface SpecField {
   id: string;

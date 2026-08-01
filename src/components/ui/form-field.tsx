@@ -7,7 +7,7 @@ export interface FormFieldProps {
   children: ReactNode;
 }
 
-/** Label + control + optional hint text, shared by every admin create/edit form. */
+/** Label + control + optional hint text — shared by every admin create/edit form and the storefront checkout form. */
 export function FormField({ label, htmlFor, hint, children }: Readonly<FormFieldProps>) {
   return (
     <div className="flex flex-col gap-1.5">

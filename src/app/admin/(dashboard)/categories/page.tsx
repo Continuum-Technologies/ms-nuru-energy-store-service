@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FolderTree, Layers, CheckCircle2, EyeOff } from "lucide-react";
+import { Plus, FolderTree, Layers, CheckCircle2, EyeOff, FileEdit, ExternalLink } from "lucide-react";
 import { db } from "@/infrastructure/database/client";
 import { requirePermissionOrRedirect } from "@/lib/permissions";
 import { deleteCategory } from "@/modules/catalog/categories/actions";
@@ -30,8 +30,15 @@ async function getCategoryStats() {
   return { total, topLevel, active, hidden };
 }
 
-export default async function CategoriesPage() {
+interface CategoriesPageProps {
+  searchParams?: Promise<{ page?: string }>;
+}
+
+export default async function CategoriesPage({ searchParams }: Readonly<CategoriesPageProps>) {
   await requirePermissionOrRedirect("categories.manage");
+
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
 
   const [categories, stats] = await Promise.all([
     db.category.findMany({
@@ -57,7 +64,7 @@ export default async function CategoriesPage() {
       header: "Category",
       hideOnMobile: true,
       render: (row) => (
-        <Link href={`/admin/categories/${row.id}/edit`} className="font-semibold text-foreground hover:text-brand-600">
+        <Link href={`/admin/categories/${row.id}/edit`} className="font-semibold text-foreground hover:text-brand-600 transition-colors">
           {row.name}
         </Link>
       ),
@@ -86,11 +93,26 @@ export default async function CategoriesPage() {
     {
       key: "actions",
       header: "",
+      align: "right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-1">
-          <Link href={`/admin/categories/${row.id}/edit`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            href={`/admin/categories/${row.id}/edit`}
+            className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 px-2 text-xs font-bold gap-1" })}
+          >
+            <FileEdit className="h-3 w-3" />
             Edit
           </Link>
+          <a
+            href={`/categories/${row.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "ghost", size: "sm", className: "h-7 px-2 text-xs font-bold gap-1 text-neutral-500 hover:text-brand-600" })}
+            title="View category page on storefront"
+          >
+            <ExternalLink className="h-3 w-3" />
+            View
+          </a>
           <DeleteRowButton action={deleteCategory} id={row.id} label="category" name={row.name} />
         </div>
       ),
@@ -119,6 +141,7 @@ export default async function CategoriesPage() {
       </div>
 
       <DataList
+        page={page}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FormField } from "@/app/admin/(dashboard)/_components/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { FolderTree, ImageIcon, Globe, ArrowLeft, Check } from "lucide-react";
 
 type FormState = { error: string } | undefined;

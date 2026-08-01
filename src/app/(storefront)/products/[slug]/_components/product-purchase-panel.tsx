@@ -1,11 +1,17 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Wrench, ShieldCheck, FileText } from "lucide-react";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { StockBadge } from "@/components/ui/stock-badge";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { buttonVariants } from "@/components/ui/button";
 import type { AvailabilityStatus } from "@/lib/inventory-status";
+import { AddToCartButton } from "../../../_components/add-to-cart-button";
 
 export interface ProductPurchasePanelProps {
+  productId: string;
   sellingPrice: number;
   previousPrice: number | null;
   hidePrice: boolean;
@@ -17,8 +23,9 @@ export interface ProductPurchasePanelProps {
   productSlug: string;
 }
 
-/** Price, availability, brand link and the quotation CTA — the PDP's right-hand action column. */
+/** Price, availability, quantity picker, add-to-cart and the quotation CTA — the PDP's right-hand action column. */
 export function ProductPurchasePanel({
+  productId,
   sellingPrice,
   previousPrice,
   hidePrice,
@@ -29,6 +36,9 @@ export function ProductPurchasePanel({
   installationRequired,
   productSlug,
 }: Readonly<ProductPurchasePanelProps>) {
+  const [quantity, setQuantity] = useState(1);
+  const canAddToCart = !hidePrice && !isQuotationOnly && availabilityStatus !== "OUT_OF_STOCK";
+
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-surface p-5">
       {brand && (
@@ -54,9 +64,18 @@ export function ProductPurchasePanel({
         </div>
       )}
 
+      {canAddToCart && (
+        <div className="flex items-center gap-3">
+          <QuantityStepper value={quantity} onChange={setQuantity} />
+          <div className="flex-1">
+            <AddToCartButton productId={productId} quantity={quantity} className="w-full" />
+          </div>
+        </div>
+      )}
+
       <Link
         href={`/request-quotation?product=${productSlug}`}
-        className={buttonVariants({ className: "w-full gap-2 font-bold" })}
+        className={buttonVariants({ variant: canAddToCart ? "outline" : "primary", className: "w-full gap-2 font-bold" })}
       >
         <FileText className="h-4 w-4" />
         Request Quotation
