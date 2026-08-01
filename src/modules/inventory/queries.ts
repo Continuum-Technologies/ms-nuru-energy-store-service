@@ -8,6 +8,7 @@ export async function getInventoryList() {
       name: true,
       sku: true,
       status: true,
+      category: { select: { name: true } },
       inventoryItem: {
         select: {
           quantityOnHand: true,
@@ -29,7 +30,9 @@ export async function getInventoryStats() {
   const totalTracked = items.length;
   const outOfStock = items.filter((item) => item.quantityOnHand <= 0).length;
   const lowStock = items.filter((item) => item.quantityOnHand > 0 && item.quantityOnHand <= item.reorderLevel).length;
-  return { totalTracked, outOfStock, lowStock };
+  const inStock = items.filter((item) => item.quantityOnHand > item.reorderLevel).length;
+  const totalUnits = items.reduce((sum, item) => sum + Math.max(item.quantityOnHand, 0), 0);
+  return { totalTracked, outOfStock, lowStock, inStock, totalUnits };
 }
 
 /** Full detail for the admin inventory item page — item numbers + its complete movement history. */
@@ -40,7 +43,11 @@ export async function getInventoryItemDetail(productId: string) {
       select: {
         id: true,
         name: true,
+        slug: true,
         sku: true,
+        status: true,
+        sellingPrice: true,
+        category: { select: { name: true } },
         inventoryItem: {
           select: {
             id: true,

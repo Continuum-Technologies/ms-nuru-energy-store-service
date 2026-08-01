@@ -1,16 +1,27 @@
 import Link from "next/link";
-import { Boxes, AlertTriangle, PackageX, PackageSearch } from "lucide-react";
+import {
+  Boxes,
+  AlertTriangle,
+  PackageX,
+  CheckCircle2,
+  SlidersHorizontal,
+  FileEdit,
+  Layers,
+} from "lucide-react";
 import { requirePermissionOrRedirect } from "@/lib/permissions";
 import { getInventoryList, getInventoryStats } from "@/modules/inventory/queries";
+import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/cn";
 
 interface InventoryRow {
   id: string;
   name: string;
   sku: string;
+  categoryName: string;
   tracked: boolean;
   quantityOnHand: number;
   reservedQuantity: number;
@@ -19,40 +30,52 @@ interface InventoryRow {
   lastCountedAt: Date | null;
 }
 
-type StockStatus = "not_tracked" | "out_of_stock" | "low_stock" | "in_stock";
+type StockStatusFilter = "all" | "low_stock" | "out_of_stock" | "in_stock" | "not_tracked";
 
-function getStockStatus(row: InventoryRow): StockStatus {
+function getStockStatus(row: InventoryRow): StockStatusFilter {
   if (!row.tracked) return "not_tracked";
   if (row.available <= 0) return "out_of_stock";
   if (row.quantityOnHand <= row.reorderLevel) return "low_stock";
   return "in_stock";
 }
 
-const STATUS_LABEL: Record<StockStatus, string> = {
+const STATUS_LABEL: Record<StockStatusFilter, string> = {
+  all: "All Records",
   not_tracked: "Not Tracked",
   out_of_stock: "Out of Stock",
   low_stock: "Low Stock",
   in_stock: "In Stock",
 };
 
-const STATUS_TONE: Record<StockStatus, "neutral" | "brand" | "success" | "warning" | "danger" | "info"> = {
+const STATUS_TONE: Record<StockStatusFilter, "neutral" | "brand" | "success" | "warning" | "danger" | "info"> = {
+  all: "neutral",
   not_tracked: "neutral",
   out_of_stock: "danger",
   low_stock: "warning",
   in_stock: "success",
 };
 
-export default async function InventoryPage() {
+interface InventoryPageProps {
+  searchParams?: Promise<{ page?: string; status?: string; q?: string }>;
+}
+
+export default async function InventoryPage({ searchParams }: Readonly<InventoryPageProps>) {
   await requirePermissionOrRedirect("inventory.view");
+
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
+  const activeStatus = (resolvedSearchParams?.status as StockStatusFilter) || "all";
+  const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [products, stats] = await Promise.all([getInventoryList(), getInventoryStats()]);
 
-  const rows: InventoryRow[] = products.map((product) => {
+  const allRows: InventoryRow[] = products.map((product) => {
     const item = product.inventoryItem;
     return {
       id: product.id,
       name: product.name,
       sku: product.sku,
+      categoryName: product.category.name,
       tracked: item !== null,
       quantityOnHand: item?.quantityOnHand ?? 0,
       reservedQuantity: item?.reservedQuantity ?? 0,
@@ -62,20 +85,88 @@ export default async function InventoryPage() {
     };
   });
 
+  // Filter rows based on status tab & search query
+  const filteredRows = allRows.filter((row) => {
+    const rowStatus = getStockStatus(row);
+    const matchesStatus = activeStatus === "all" || rowStatus === activeStatus;
+    const matchesSearch =
+      !searchQuery ||
+      row.name.toLowerCase().includes(searchQuery) ||
+      row.sku.toLowerCase().includes(searchQuery) ||
+      row.categoryName.toLowerCase().includes(searchQuery);
+
+    return matchesStatus && matchesSearch;
+  });
+
   const columns: DataListColumn<InventoryRow>[] = [
     {
       key: "product",
-      header: "Product",
+      header: "Product & Category",
       render: (row) => (
-        <Link href={`/admin/inventory/${row.id}`} className="font-medium text-foreground hover:text-brand-600">
-          {row.name}
-        </Link>
+        <div className="flex flex-col gap-0.5">
+          <Link
+            href={`/admin/inventory/${row.id}`}
+            className="font-semibold text-foreground hover:text-brand-600 transition-colors"
+          >
+            {row.name}
+          </Link>
+          <span className="text-xs text-neutral-500">{row.categoryName}</span>
+        </div>
       ),
     },
-    { key: "sku", header: "SKU", hideOnMobile: true, render: (row) => <span className="text-neutral-500">{row.sku}</span> },
-    { key: "onHand", header: "On Hand", render: (row) => (row.tracked ? row.quantityOnHand : "—") },
-    { key: "reserved", header: "Reserved", hideOnMobile: true, render: (row) => (row.tracked ? row.reservedQuantity : "—") },
-    { key: "available", header: "Available", render: (row) => (row.tracked ? row.available : "—") },
+    {
+      key: "sku",
+      header: "SKU",
+      hideOnMobile: true,
+      render: (row) => <span className="font-mono text-xs text-neutral-500">{row.sku}</span>,
+    },
+    {
+      key: "onHand",
+      header: "On Hand",
+      render: (row) =>
+        row.tracked ? (
+          <span className="font-semibold text-foreground">{row.quantityOnHand.toLocaleString("en-KE")}</span>
+        ) : (
+          <span className="text-neutral-400">—</span>
+        ),
+    },
+    {
+      key: "reserved",
+      header: "Reserved",
+      hideOnMobile: true,
+      render: (row) => {
+        if (!row.tracked) return <span className="text-neutral-400">—</span>;
+        if (row.reservedQuantity > 0) {
+          return (
+            <span className="text-xs font-semibold text-warning-700 dark:text-warning-300">
+              {row.reservedQuantity.toLocaleString("en-KE")} allocated
+            </span>
+          );
+        }
+        return <span className="text-xs text-neutral-400">0</span>;
+      },
+    },
+    {
+      key: "available",
+      header: "Available",
+      render: (row) =>
+        row.tracked ? (
+          <span className="font-bold text-xs text-foreground">{row.available.toLocaleString("en-KE")}</span>
+        ) : (
+          <span className="text-neutral-400">—</span>
+        ),
+    },
+    {
+      key: "reorderLevel",
+      header: "Reorder At",
+      hideOnMobile: true,
+      render: (row) =>
+        row.tracked ? (
+          <span className="text-xs font-mono text-neutral-500">{row.reorderLevel} units</span>
+        ) : (
+          <span className="text-neutral-400">—</span>
+        ),
+    },
     {
       key: "status",
       header: "Status",
@@ -85,37 +176,140 @@ export default async function InventoryPage() {
       },
     },
     {
-      key: "lastCounted",
-      header: "Last Counted",
-      hideOnMobile: true,
-      render: (row) => (row.lastCountedAt ? new Date(row.lastCountedAt).toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—"),
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (row) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            href={`/admin/inventory/${row.id}`}
+            className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 px-2 text-xs font-bold gap-1" })}
+            title="Manage stock & view movement history"
+          >
+            <SlidersHorizontal className="h-3 w-3" />
+            Stock Ops
+          </Link>
+          <Link
+            href={`/admin/products/${row.id}/edit`}
+            className={buttonVariants({ variant: "ghost", size: "sm", className: "h-7 px-2 text-xs font-bold gap-1 text-neutral-500 hover:text-brand-600" })}
+            title="Edit product parameters"
+          >
+            <FileEdit className="h-3 w-3" />
+            Edit
+          </Link>
+        </div>
+      ),
     },
+  ];
+
+  const statusFilters: { id: StockStatusFilter; label: string; count?: number }[] = [
+    { id: "all", label: "All Products", count: allRows.length },
+    { id: "low_stock", label: "Low Stock", count: stats.lowStock },
+    { id: "out_of_stock", label: "Out of Stock", count: stats.outOfStock },
+    { id: "in_stock", label: "In Stock", count: stats.inStock },
+    { id: "not_tracked", label: "Not Tracked", count: allRows.length - stats.totalTracked },
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Inventory</h1>
-        <p className="text-sm text-neutral-500">Track stock levels, receive shipments, and log damage, loss, and counts.</p>
+      {/* Header & Quick Navigation */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Inventory Ledger</h1>
+          <p className="text-sm text-neutral-500">
+            Track live warehouse & store stock levels, monitor reorder points, receive stock, and audit physical counts.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link href="/admin/products" className={buttonVariants({ variant: "outline", size: "sm", className: "gap-1.5 font-bold" })}>
+            <Layers className="h-4 w-4" />
+            Manage Catalog
+          </Link>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-        <KpiCard title="Tracked Products" value={stats.totalTracked} subtitle="With stock records" icon={<Boxes className="h-4 w-4 sm:h-5 sm:w-5" />} tone="brand" />
-        <KpiCard title="Low Stock" value={stats.lowStock} subtitle="At or below reorder level" icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} tone="warning" />
-        <KpiCard title="Out of Stock" value={stats.outOfStock} subtitle={stats.outOfStock > 0 ? "Needs restocking" : "All available"} icon={<PackageX className="h-4 w-4 sm:h-5 sm:w-5" />} tone="danger" />
+      {/* KPI Stat Strip */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <KpiCard
+          title="Tracked Products"
+          value={stats.totalTracked}
+          subtitle={`${stats.totalUnits.toLocaleString("en-KE")} total units on hand`}
+          icon={<Boxes className="h-4 w-4 sm:h-5 sm:w-5" />}
+          tone="brand"
+        />
+        <KpiCard
+          title="In Stock"
+          value={stats.inStock}
+          subtitle="Healthy stock levels"
+          icon={<CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />}
+          tone="success"
+        />
+        <KpiCard
+          title="Low Stock Warning"
+          value={stats.lowStock}
+          subtitle="At or below reorder level"
+          icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />}
+          tone="warning"
+        />
+        <KpiCard
+          title="Out of Stock Alert"
+          value={stats.outOfStock}
+          subtitle={stats.outOfStock > 0 ? "Replenish immediately" : "Zero stockouts"}
+          icon={<PackageX className="h-4 w-4 sm:h-5 sm:w-5" />}
+          tone="danger"
+        />
       </div>
 
+      {/* Status Filter Tab Toolbar */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
+        {statusFilters.map((tab) => {
+          const isActive = activeStatus === tab.id;
+          return (
+            <Link
+              key={tab.id}
+              href={`/admin/inventory${tab.id === "all" ? "" : `?status=${tab.id}`}`}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                isActive
+                  ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
+                  : "bg-surface-muted text-neutral-600 hover:bg-surface-muted/80 dark:text-neutral-300",
+              )}
+            >
+              {tab.label}
+              {tab.count !== undefined && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200",
+                  )}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Inventory Data List */}
       <DataList
+        page={page}
         columns={columns}
-        rows={rows}
+        rows={filteredRows}
         rowKey={(row) => row.id}
         mobileTitle={(row) => row.name}
         mobileAccessory={(row) => <Badge tone={STATUS_TONE[getStockStatus(row)]}>{STATUS_LABEL[getStockStatus(row)]}</Badge>}
         emptyState={
           <EmptyState
-            title="No products yet"
-            description="Add products from the catalog to start tracking stock."
-            action={<PackageSearch className="h-5 w-5 text-neutral-400" />}
+            title="No inventory records found"
+            description="No products match the selected stock status filter."
+            action={
+              <Link href="/admin/inventory" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                Reset Filters
+              </Link>
+            }
           />
         }
       />
