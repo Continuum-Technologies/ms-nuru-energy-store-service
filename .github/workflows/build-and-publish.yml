@@ -156,8 +156,6 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: NURU_VERSION
-          script_stop: true
           script: |
             cd ~/nuru-energy-store-service/deployment
             git pull --ff-only
