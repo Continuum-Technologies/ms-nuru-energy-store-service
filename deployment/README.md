@@ -45,7 +45,7 @@ separate subdomain.
 ## First-time setup
 
 ```bash
-git clone <this-repo-url> ~/nuru-energy-store-service
+git clone https://github.com/Continuum-Technologies/ms-nuru-energy-store-service.git ~/nuru-energy-store-service
 cd ~/nuru-energy-store-service/deployment
 cp .env.template .env
 nano .env   # fill in every value — see comments in the file
