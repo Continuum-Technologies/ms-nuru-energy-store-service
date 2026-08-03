@@ -8,6 +8,11 @@ import type { NextConfig } from "next";
 const rustfsPublicUrl = new URL(process.env.RUSTFS_PUBLIC_URL ?? "http://localhost:9000");
 
 const nextConfig: NextConfig = {
+  // Traces the minimal set of node_modules actually imported at runtime into
+  // .next/standalone — the production Dockerfile copies only that output,
+  // not the full node_modules (@prisma alone is ~170MB), so this is what
+  // keeps the final image small. Has no effect on `next dev`.
+  output: "standalone",
   allowedDevOrigins: ['192.168.88.3'],
   images: {
     remotePatterns: [

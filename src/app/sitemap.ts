@@ -2,6 +2,13 @@ import type { MetadataRoute } from "next";
 import { getPublishedProductSlugs, getActiveCategorySlugs, getActiveBrandSlugs } from "@/modules/catalog/queries";
 import { env } from "@/lib/env";
 
+// Without this, sitemap.ts has no request-time API call so Next.js treats it
+// as statically renderable and executes it once at `next build` — freezing
+// the sitemap until the next deploy and requiring a real DB connection at
+// build time. force-dynamic makes it render per-request as the comment below
+// always intended (CLAUDE.md §10: "Sitemaps regenerate when public content changes").
+export const dynamic = "force-dynamic";
+
 /** Regenerated on every request from live, published-only data — never a static list (CLAUDE.md §10). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories, brands] = await Promise.all([

@@ -1,0 +1,32 @@
+# Version control & editor
+.git
+.gitignore
+.vscode
+.idea
+
+# Dependencies & build output (installed/built inside the image, not copied in)
+node_modules
+.next
+src/generated
+
+# Env files — the build stage uses placeholder ENV values (see Dockerfile);
+# real secrets are injected at `docker run`/compose time, never baked in.
+.env
+.env*.local
+.env.development
+.env.production
+
+# Logs & OS cruft
+npm-debug.log*
+*.log
+.DS_Store
+
+# Docs & local-only scratch (not needed inside the image)
+*.md
+!README.md
+scripts/_tmp-*
+
+# Docker itself
+Dockerfile
+.dockerignore
+docker-compose.yml

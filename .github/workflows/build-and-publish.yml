@@ -1,0 +1,164 @@
+name: Build, Publish & Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional image tag override"
+        required: false
+        default: ""
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semver.outputs.version }}
+    env:
+      DOCKER_IMAGE_PREFIX: ${{ vars.DOCKER_IMAGE_PREFIX }}
+      DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate required configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${DOCKER_IMAGE_PREFIX}" ]] || { echo "Missing repository variable DOCKER_IMAGE_PREFIX" >&2; exit 1; }
+          [[ -n "${DOCKER_REGISTRY_USERNAME}" ]] || { echo "Missing repository secret DOCKERHUB_USERNAME" >&2; exit 1; }
+          [[ -n "${DOCKER_REGISTRY_PASSWORD}" ]] || { echo "Missing repository secret DOCKERHUB_TOKEN" >&2; exit 1; }
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ env.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Compute next semver tag
+        id: semver
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_BASE="${DOCKER_IMAGE_PREFIX%/}/nuru-energy-store"
+          PREFIX="1.0."
+
+          if ! docker buildx imagetools inspect "${IMAGE_BASE}:${PREFIX}0" >/dev/null 2>&1; then
+            echo "version=${PREFIX}0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          upper=1
+          while docker buildx imagetools inspect "${IMAGE_BASE}:${PREFIX}${upper}" >/dev/null 2>&1; do
+            upper=$((upper * 2))
+            [[ ${upper} -gt 10000 ]] && break
+          done
+
+          low=0
+          high=${upper}
+          while ((low < high)); do
+            mid=$(((low + high) / 2))
+            if docker buildx imagetools inspect "${IMAGE_BASE}:${PREFIX}${mid}" >/dev/null 2>&1; then
+              low=$((mid + 1))
+            else
+              high=${mid}
+            fi
+          done
+
+          echo "version=${PREFIX}${low}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute tags
+        id: tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAGS=("sha-${GITHUB_SHA::12}")
+
+          if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
+            TAGS=("${{ github.event.inputs.image_tag }}" "sha-${GITHUB_SHA::12}")
+          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            TAGS+=("main" "latest" "${{ steps.semver.outputs.version }}")
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAGS+=("${GITHUB_REF_NAME}" "${{ steps.semver.outputs.version }}")
+          fi
+
+          {
+            echo "list<<EOF"
+            printf '%s\n' "${TAGS[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # Two images are pushed from the same build: the app itself (`runner`
+      # target, the default) and a `migrate-<tag>` variant (`migrator`
+      # target) used only for one-off `prisma migrate deploy` / `db seed`
+      # runs — see the Dockerfile and deployment/scripts/migrate.sh for why
+      # the runtime image can't run those itself.
+      - name: Build and push app image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_BASE="${DOCKER_IMAGE_PREFIX%/}/nuru-energy-store"
+          TAG_ARGS=()
+          while IFS= read -r tag; do
+            [[ -n "$tag" ]] && TAG_ARGS+=(--tag "${IMAGE_BASE}:${tag}")
+          done <<< "${{ steps.tags.outputs.list }}"
+
+          docker buildx build \
+            --file ./Dockerfile \
+            --target runner \
+            --push \
+            "${TAG_ARGS[@]}" \
+            .
+
+      - name: Build and push migrator image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_BASE="${DOCKER_IMAGE_PREFIX%/}/nuru-energy-store"
+          TAG_ARGS=()
+          while IFS= read -r tag; do
+            [[ -n "$tag" ]] && TAG_ARGS+=(--tag "${IMAGE_BASE}:migrate-${tag}")
+          done <<< "${{ steps.tags.outputs.list }}"
+
+          docker buildx build \
+            --file ./Dockerfile \
+            --target migrator \
+            --push \
+            "${TAG_ARGS[@]}" \
+            .
+
+      - name: Show pushed tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Pushed tags for ${DOCKER_IMAGE_PREFIX%/}/nuru-energy-store (app + migrate-*):"
+          echo "${{ steps.tags.outputs.list }}"
+
+  deploy:
+    needs: build-and-push
+    if: github.ref_name == 'main' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to production over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: NURU_VERSION
+          script_stop: true
+          script: |
+            cd ~/nuru-energy-store-service/deployment
+            git pull --ff-only
+            NURU_VERSION="${{ needs.build-and-push.outputs.version }}" ./scripts/remote-deploy.sh
