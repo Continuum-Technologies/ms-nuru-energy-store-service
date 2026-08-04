@@ -57,7 +57,7 @@ export function MobileDrawer({ categoryLinks }: Readonly<MobileDrawerProps>) {
 
       {/* Render via Portal directly to body to escape sticky header backdrop-filter containing block */}
       {isOpen && isMounted && createPortal(
-        <div className="fixed inset-0 z-[100] flex flex-col bg-background">
+        <div className="fixed inset-0 z-[100] flex flex-col bg-neutral-0 dark:bg-neutral-950 text-foreground">
           <div className="flex items-center justify-between border-b border-border p-4">
             <span className="flex items-center gap-2 text-base font-bold text-foreground">
               <Zap className="h-5 w-5 text-brand-600" />
