@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Menu, X, Zap, Phone, ShoppingBag, FileText, ChevronRight, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,23 @@ export interface MobileDrawerProps {
   categoryLinks: NavCategory[];
 }
 
+const emptySubscribe = () => () => {};
+
 /** Category links are passed in from the (server) header, which queries them live — this stays a client component only for the open/close state. */
 export function MobileDrawer({ categoryLinks }: Readonly<MobileDrawerProps>) {
   const [isOpen, setIsOpen] = useState(false);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const toggleDrawer = () => setIsOpen((prev) => !prev);
   const closeDrawer = () => setIsOpen(false);
@@ -40,12 +55,9 @@ export function MobileDrawer({ categoryLinks }: Readonly<MobileDrawerProps>) {
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </Button>
 
-      {/* A self-contained full-screen overlay with its own top bar, rather
-          than a fixed pixel offset trying to sit below the page header —
-          that coupling would break the moment the header's height changes
-          (e.g. the top contact bar wrapping on a narrow viewport). */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      {/* Render via Portal directly to body to escape sticky header backdrop-filter containing block */}
+      {isOpen && isMounted && createPortal(
+        <div className="fixed inset-0 z-[100] flex flex-col bg-background">
           <div className="flex items-center justify-between border-b border-border p-4">
             <span className="flex items-center gap-2 text-base font-bold text-foreground">
               <Zap className="h-5 w-5 text-brand-600" />
@@ -147,7 +159,8 @@ export function MobileDrawer({ categoryLinks }: Readonly<MobileDrawerProps>) {
               </Link>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
