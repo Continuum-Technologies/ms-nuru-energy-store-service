@@ -25,4 +25,7 @@ fi
 
 echo "[remote-deploy] Deploying nuru-energy with NURU_VERSION=${NURU_VERSION:-latest}..."
 docker stack deploy --with-registry-auth --resolve-image=always -c docker-compose.yml nuru-energy
+
+echo "[remote-deploy] Cleaning up dangling and old images..."
+docker image prune -af --filter "until=24h" 2>/dev/null || true
 echo "[remote-deploy] Done. Watch rollout with: docker service ls"

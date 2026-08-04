@@ -99,44 +99,44 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      # Two images are pushed from the same build: the app itself (`runner`
-      # target, the default) and a `migrate-<tag>` variant (`migrator`
-      # target) used only for one-off `prisma migrate deploy` / `db seed`
-      # runs — see the Dockerfile and deployment/scripts/migrate.sh for why
-      # the runtime image can't run those itself.
-      - name: Build and push app image
+      - name: Format tags for buildx action
+        id: formatted-tags
         shell: bash
         run: |
           set -euo pipefail
           IMAGE_BASE="${DOCKER_IMAGE_PREFIX%/}/nuru-energy-store"
-          TAG_ARGS=()
+          APP_TAGS=""
+          MIGRATE_TAGS=""
           while IFS= read -r tag; do
-            [[ -n "$tag" ]] && TAG_ARGS+=(--tag "${IMAGE_BASE}:${tag}")
+            if [[ -n "$tag" ]]; then
+              APP_TAGS="${APP_TAGS}${IMAGE_BASE}:${tag},"
+              MIGRATE_TAGS="${MIGRATE_TAGS}${IMAGE_BASE}:migrate-${tag},"
+            fi
           done <<< "${{ steps.tags.outputs.list }}"
+          echo "app_tags=${APP_TAGS%,}" >> "$GITHUB_OUTPUT"
+          echo "migrate_tags=${MIGRATE_TAGS%,}" >> "$GITHUB_OUTPUT"
 
-          docker buildx build \
-            --file ./Dockerfile \
-            --target runner \
-            --push \
-            "${TAG_ARGS[@]}" \
-            .
+      - name: Build and push app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: runner
+          push: true
+          tags: ${{ steps.formatted-tags.outputs.app_tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push migrator image
-        shell: bash
-        run: |
-          set -euo pipefail
-          IMAGE_BASE="${DOCKER_IMAGE_PREFIX%/}/nuru-energy-store"
-          TAG_ARGS=()
-          while IFS= read -r tag; do
-            [[ -n "$tag" ]] && TAG_ARGS+=(--tag "${IMAGE_BASE}:migrate-${tag}")
-          done <<< "${{ steps.tags.outputs.list }}"
-
-          docker buildx build \
-            --file ./Dockerfile \
-            --target migrator \
-            --push \
-            "${TAG_ARGS[@]}" \
-            .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: migrator
+          push: true
+          tags: ${{ steps.formatted-tags.outputs.migrate_tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Show pushed tags
         shell: bash
