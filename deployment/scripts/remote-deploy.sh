@@ -15,12 +15,14 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+DEPLOY_TAG="${NURU_VERSION:-}"
+
 set -a
 source .env
 set +a
 
-if [[ -n "${NURU_VERSION:-}" ]]; then
-  export NURU_VERSION
+if [[ -n "${DEPLOY_TAG}" ]]; then
+  export NURU_VERSION="${DEPLOY_TAG}"
 fi
 
 echo "[remote-deploy] Deploying nuru-energy with NURU_VERSION=${NURU_VERSION:-latest}..."
