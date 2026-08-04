@@ -1,0 +1,1 @@
+ssh -L 8084:localhost:8080 admin@nuru.vps.webdock.cloud

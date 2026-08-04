@@ -35,11 +35,14 @@ networks:
 
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.7
+    environment:
+      DOCKER_API_VERSION: "1.40"
     command:
-      - "--providers.docker.swarmMode=true"
-      - "--providers.docker.exposedByDefault=false"
-      - "--providers.docker.network=nuru-public"
+      - "--global.checknewversion=false"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.exposedByDefault=false"
+      - "--providers.swarm.network=nuru-energy_nuru-public"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
@@ -92,6 +95,7 @@ services:
         - "traefik.http.routers.traefik-dashboard.service=api@internal"
         - "traefik.http.routers.traefik-dashboard.middlewares=traefik-dashboard-auth"
         - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+        - "traefik.http.services.nuru-energy-traefik.loadbalancer.server.port=8080"
 
   postgres:
     image: postgres:17-alpine
@@ -153,7 +157,7 @@ services:
         delay: 10s
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=nuru-public"
+        - "traefik.swarm.network=nuru-energy_nuru-public"
         # Matched before nuru-web's catch-all router below — same Host, but
         # a path prefix is more specific so Traefik would pick this first
         # anyway; the explicit priority just makes that non-negotiable.
@@ -206,7 +210,7 @@ services:
         reservations: { cpus: "0.25", memory: 256M }
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=nuru-public"
+        - "traefik.swarm.network=nuru-energy_nuru-public"
         - "traefik.http.routers.nuru-web.rule=Host(`nuruenergy.co.ke`)"
         - "traefik.http.routers.nuru-web.entrypoints=websecure"
         - "traefik.http.routers.nuru-web.tls.certresolver=letsencrypt"
