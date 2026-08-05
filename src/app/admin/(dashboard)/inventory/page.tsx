@@ -43,12 +43,30 @@ function getStockStatus(row: InventoryRow): StockStatusFilter {
   return "in_stock";
 }
 
+const STATUS_LABEL: Record<StockStatusFilter, string> = {
+  all: "All Records",
+  not_tracked: "Not Tracked",
+  out_of_stock: "Out of Stock",
+  low_stock: "Low Stock",
+  in_stock: "In Stock",
+};
+
+const STATUS_TONE: Record<StockStatusFilter, "neutral" | "brand" | "success" | "warning" | "danger" | "info"> = {
+  all: "neutral",
+  not_tracked: "neutral",
+  out_of_stock: "danger",
+  low_stock: "warning",
+  in_stock: "success",
+};
+
 const PRODUCT_STATUS_TONE: Record<ProductStatus, "success" | "neutral" | "warning" | "danger"> = {
   ACTIVE: "success",
   DRAFT: "neutral",
   HIDDEN: "neutral",
   AVAILABLE_ON_ORDER: "warning",
   OUT_OF_STOCK: "danger",
+  DISCONTINUED: "danger",
+  ARCHIVED: "neutral",
 };
 
 interface InventoryPageProps {
