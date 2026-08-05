@@ -9,6 +9,7 @@ import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DeleteRowButton } from "@/app/admin/(dashboard)/_components/delete-row-button";
+import { AdminSearchInput } from "@/app/admin/(dashboard)/_components/admin-search-input";
 
 interface BrandRow {
   id: string;
@@ -31,7 +32,7 @@ async function getBrandStats() {
 }
 
 interface BrandsPageProps {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string }>;
 }
 
 export default async function BrandsPage({ searchParams }: Readonly<BrandsPageProps>) {
@@ -39,6 +40,7 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
 
   const resolvedSearchParams = await searchParams;
   const page = Number(resolvedSearchParams?.page) || 1;
+  const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [brands, stats] = await Promise.all([
     db.brand.findMany({
@@ -48,7 +50,7 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
     getBrandStats(),
   ]);
 
-  const rows: BrandRow[] = brands.map((brand) => ({
+  const allRows: BrandRow[] = brands.map((brand) => ({
     id: brand.id,
     name: brand.name,
     slug: brand.slug,
@@ -58,6 +60,15 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
     isFeatured: brand.isFeatured,
     productCount: brand._count.products,
   }));
+
+  const rows = allRows.filter((row) => {
+    if (!searchQuery) return true;
+    return (
+      row.name.toLowerCase().includes(searchQuery) ||
+      row.slug.toLowerCase().includes(searchQuery) ||
+      (row.countryOfOrigin && row.countryOfOrigin.toLowerCase().includes(searchQuery))
+    );
+  });
 
   const columns: DataListColumn<BrandRow>[] = [
     {
@@ -148,6 +159,11 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
         <KpiCard title="Active Brands" value={stats.active} subtitle="Filterable on Storefront" icon={<CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />} tone="success" />
       </div>
 
+      {/* Toolbar: Search input */}
+      <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+        <AdminSearchInput placeholder="Search 46 brands by manufacturer name, slug, or country..." />
+      </div>
+
       <DataList
         page={page}
         columns={columns}
@@ -157,12 +173,18 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
         mobileAccessory={(row) => <Badge tone={row.isActive ? "success" : "neutral"}>{row.isActive ? "Active" : "Hidden"}</Badge>}
         emptyState={
           <EmptyState
-            title="No manufacturers added yet"
-            description="Add equipment manufacturers like Must Solar, Sunsynk, or Victron Energy to stock their products."
+            title={searchQuery ? `No manufacturers match "${searchQuery}"` : "No manufacturers added yet"}
+            description={searchQuery ? "Try searching for a different manufacturer or brand name." : "Add equipment manufacturers like Must Solar, Sunsynk, or Victron Energy to stock their products."}
             action={
-              <Link href="/admin/brands/new" className={buttonVariants({ size: "sm" })}>
-                Add Brand
-              </Link>
+              searchQuery ? (
+                <Link href="/admin/brands" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  Clear Search
+                </Link>
+              ) : (
+                <Link href="/admin/brands/new" className={buttonVariants({ size: "sm" })}>
+                  Add Brand
+                </Link>
+              )
             }
           />
         }

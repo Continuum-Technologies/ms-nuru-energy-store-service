@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
+import { AdminSearchInput } from "@/app/admin/(dashboard)/_components/admin-search-input";
 import { cn } from "@/lib/cn";
 
 interface InventoryRow {
@@ -260,37 +261,41 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
         />
       </div>
 
-      {/* Status Filter Tab Toolbar */}
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
-        {statusFilters.map((tab) => {
-          const isActive = activeStatus === tab.id;
-          return (
-            <Link
-              key={tab.id}
-              href={`/admin/inventory${tab.id === "all" ? "" : `?status=${tab.id}`}`}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                isActive
-                  ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
-                  : "bg-surface-muted text-neutral-600 hover:bg-surface-muted/80 dark:text-neutral-300",
-              )}
-            >
-              {tab.label}
-              {tab.count !== undefined && (
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
-                    isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200",
-                  )}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+      {/* Status Filter & Search Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <AdminSearchInput placeholder="Search inventory by product, SKU, or category..." />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {statusFilters.map((tab) => {
+            const isActive = activeStatus === tab.id;
+            return (
+              <Link
+                key={tab.id}
+                href={`/admin/inventory${tab.id === "all" ? (searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "") : `?status=${tab.id}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}`}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                  isActive
+                    ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
+                    : "bg-surface-muted text-neutral-600 hover:bg-surface-muted/80 dark:text-neutral-300",
+                )}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Inventory Data List */}

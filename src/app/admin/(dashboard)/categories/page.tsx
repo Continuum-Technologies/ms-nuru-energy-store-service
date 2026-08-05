@@ -9,6 +9,7 @@ import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DeleteRowButton } from "@/app/admin/(dashboard)/_components/delete-row-button";
+import { AdminSearchInput } from "@/app/admin/(dashboard)/_components/admin-search-input";
 
 interface CategoryRow {
   id: string;
@@ -31,7 +32,7 @@ async function getCategoryStats() {
 }
 
 interface CategoriesPageProps {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string }>;
 }
 
 export default async function CategoriesPage({ searchParams }: Readonly<CategoriesPageProps>) {
@@ -39,6 +40,7 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
 
   const resolvedSearchParams = await searchParams;
   const page = Number(resolvedSearchParams?.page) || 1;
+  const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [categories, stats] = await Promise.all([
     db.category.findMany({
@@ -48,7 +50,7 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
     getCategoryStats(),
   ]);
 
-  const rows: CategoryRow[] = categories.map((category) => ({
+  const allRows: CategoryRow[] = categories.map((category) => ({
     id: category.id,
     name: category.name,
     slug: category.slug,
@@ -57,6 +59,15 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
     productCount: category._count.products,
     displayOrder: category.displayOrder,
   }));
+
+  const rows = allRows.filter((row) => {
+    if (!searchQuery) return true;
+    return (
+      row.name.toLowerCase().includes(searchQuery) ||
+      row.slug.toLowerCase().includes(searchQuery) ||
+      (row.parentName && row.parentName.toLowerCase().includes(searchQuery))
+    );
+  });
 
   const columns: DataListColumn<CategoryRow>[] = [
     {
@@ -140,6 +151,11 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
         <KpiCard title="Hidden / Draft" value={stats.hidden} subtitle="Not Published" icon={<EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />} tone="warning" />
       </div>
 
+      {/* Toolbar: Search input */}
+      <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+        <AdminSearchInput placeholder="Search 36 categories by name, slug, or parent..." />
+      </div>
+
       <DataList
         page={page}
         columns={columns}
@@ -149,12 +165,18 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
         mobileAccessory={(row) => <Badge tone={row.isActive ? "success" : "neutral"}>{row.isActive ? "Active" : "Hidden"}</Badge>}
         emptyState={
           <EmptyState
-            title="No categories created yet"
-            description="Create your first equipment category to start organizing storefront products."
+            title={searchQuery ? `No categories match "${searchQuery}"` : "No categories created yet"}
+            description={searchQuery ? "Try searching for a different keyword." : "Create your first equipment category to start organizing storefront products."}
             action={
-              <Link href="/admin/categories/new" className={buttonVariants({ size: "sm" })}>
-                Add Category
-              </Link>
+              searchQuery ? (
+                <Link href="/admin/categories" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  Clear Search
+                </Link>
+              ) : (
+                <Link href="/admin/categories/new" className={buttonVariants({ size: "sm" })}>
+                  Add Category
+                </Link>
+              )
             }
           />
         }

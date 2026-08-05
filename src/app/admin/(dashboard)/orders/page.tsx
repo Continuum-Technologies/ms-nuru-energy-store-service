@@ -8,6 +8,7 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatKes } from "@/lib/currency";
+import { AdminSearchInput } from "@/app/admin/(dashboard)/_components/admin-search-input";
 import type { OrderStatus, PaymentStatus } from "@/generated/prisma/client";
 
 const PAYMENT_STATUS_TONE: Record<PaymentStatus, "neutral" | "brand" | "success" | "warning" | "danger" | "info"> = {
@@ -41,12 +42,20 @@ interface OrderRow {
   quotationNumber: string | null;
 }
 
-export default async function OrdersPage() {
+interface OrdersPageProps {
+  searchParams?: Promise<{ page?: string; q?: string }>;
+}
+
+export default async function OrdersPage({ searchParams }: Readonly<OrdersPageProps>) {
   await requirePermissionOrRedirect("orders.view");
+
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
+  const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [orders, stats] = await Promise.all([getOrdersList(), getOrderStats()]);
 
-  const rows: OrderRow[] = orders.map((order) => {
+  const allRows: OrderRow[] = orders.map((order) => {
     const customerName = order.guestName || order.customer?.name || "Customer";
     const customerPhone = order.guestPhone || order.customer?.phone || null;
     const customerEmail = order.guestEmail || order.customer?.email || null;
@@ -70,6 +79,17 @@ export default async function OrdersPage() {
       paymentMethod: payment?.method ?? null,
       quotationNumber: order.quotation?.quotationNumber ?? null,
     };
+  });
+
+  const rows = allRows.filter((row) => {
+    if (!searchQuery) return true;
+    return (
+      row.orderNumber.toLowerCase().includes(searchQuery) ||
+      row.customerName.toLowerCase().includes(searchQuery) ||
+      (row.customerPhone && row.customerPhone.toLowerCase().includes(searchQuery)) ||
+      (row.customerEmail && row.customerEmail.toLowerCase().includes(searchQuery)) ||
+      (row.quotationNumber && row.quotationNumber.toLowerCase().includes(searchQuery))
+    );
   });
 
   const columns: DataListColumn<OrderRow>[] = [
@@ -231,8 +251,14 @@ export default async function OrdersPage() {
         />
       </div>
 
+      {/* Toolbar: Search bar */}
+      <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+        <AdminSearchInput placeholder="Search orders by ref number, customer name, or phone..." />
+      </div>
+
       {/* Main Data Table */}
       <DataList
+        page={page}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
@@ -240,8 +266,8 @@ export default async function OrdersPage() {
         mobileAccessory={(row) => <Badge tone={getOrderStatusTone(row.status)}>{row.status.replaceAll("_", " ")}</Badge>}
         emptyState={
           <EmptyState
-            title="No orders found"
-            description="Customer checkout purchases and converted quotations will be recorded here automatically."
+            title={searchQuery ? `No orders match "${searchQuery}"` : "No orders found"}
+            description={searchQuery ? "Try searching for a different order reference or phone number." : "Customer checkout purchases and converted quotations will be recorded here automatically."}
             action={<ShoppingCart className="h-5 w-5 text-neutral-400" />}
           />
         }

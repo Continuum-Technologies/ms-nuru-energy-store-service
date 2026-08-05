@@ -9,7 +9,9 @@ import { DataList, type DataListColumn } from "@/components/ui/data-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { formatKes } from "@/lib/currency";
+import { cn } from "@/lib/cn";
 import { DeleteRowButton } from "@/app/admin/(dashboard)/_components/delete-row-button";
+import { AdminSearchInput } from "@/app/admin/(dashboard)/_components/admin-search-input";
 import type { ProductStatus } from "@/generated/prisma/client";
 
 const STATUS_TONE: Record<ProductStatus, "success" | "neutral" | "warning" | "danger"> = {
@@ -44,24 +46,40 @@ async function getProductStats() {
 }
 
 interface ProductsPageProps {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; status?: string; q?: string }>;
 }
+
+type ProductStatusFilter = "all" | "DRAFT" | "ACTIVE" | "OUT_OF_STOCK" | "DISCONTINUED";
+
+const STATUS_FILTERS: { id: ProductStatusFilter; label: string }[] = [
+  { id: "all", label: "All Products" },
+  { id: "DRAFT", label: "Drafts" },
+  { id: "ACTIVE", label: "Active" },
+  { id: "OUT_OF_STOCK", label: "Out of Stock" },
+  { id: "DISCONTINUED", label: "Discontinued" },
+];
 
 export default async function ProductsPage({ searchParams }: Readonly<ProductsPageProps>) {
   await requirePermissionOrRedirect("products.view");
 
   const resolvedSearchParams = await searchParams;
   const page = Number(resolvedSearchParams?.page) || 1;
+  const activeStatus = (resolvedSearchParams?.status as ProductStatusFilter) || "all";
+  const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [products, stats] = await Promise.all([
     db.product.findMany({
-      include: { category: { select: { name: true } }, inventoryItem: { select: { quantityOnHand: true } } },
+      include: {
+        category: { select: { name: true } },
+        brand: { select: { name: true } },
+        inventoryItem: { select: { quantityOnHand: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     getProductStats(),
   ]);
 
-  const rows: ProductRow[] = products.map((product) => ({
+  const allRows: ProductRow[] = products.map((product) => ({
     id: product.id,
     name: product.name,
     slug: product.slug,
@@ -71,6 +89,22 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
     status: product.status,
     quantityOnHand: product.inventoryItem?.quantityOnHand ?? null,
   }));
+
+  // Filter products by search query and active status tab
+  const rows = allRows.filter((row) => {
+    const matchesStatus =
+      activeStatus === "all" ||
+      (activeStatus === "OUT_OF_STOCK" ? row.quantityOnHand === 0 : row.status === activeStatus);
+
+    const matchesSearch =
+      !searchQuery ||
+      row.name.toLowerCase().includes(searchQuery) ||
+      row.sku.toLowerCase().includes(searchQuery) ||
+      row.categoryName.toLowerCase().includes(searchQuery) ||
+      row.status.toLowerCase().includes(searchQuery);
+
+    return matchesStatus && matchesSearch;
+  });
 
   const columns: DataListColumn<ProductRow>[] = [
     {
@@ -142,6 +176,31 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
         <KpiCard title="Out of Stock" value={stats.outOfStock} subtitle={stats.outOfStock > 0 ? "Replenish Now" : "All Available"} icon={<PackageX className="h-4 w-4 sm:h-5 sm:w-5" />} tone="danger" />
       </div>
 
+      {/* Toolbar: Search input and Status filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <AdminSearchInput placeholder="Search 127 products by name, SKU, or category..." />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {STATUS_FILTERS.map((tab) => {
+            const isActive = activeStatus === tab.id;
+            return (
+              <Link
+                key={tab.id}
+                href={`/admin/products${tab.id === "all" ? (searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "") : `?status=${tab.id}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}`}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                  isActive
+                    ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
+                    : "bg-surface-muted text-neutral-600 hover:bg-surface-muted/80 dark:text-neutral-300",
+                )}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       <DataList
         page={page}
         columns={columns}
@@ -151,12 +210,18 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
         mobileAccessory={(row) => <Badge tone={STATUS_TONE[row.status]}>{row.status.replaceAll("_", " ")}</Badge>}
         emptyState={
           <EmptyState
-            title="No products yet"
-            description="Add your first product to start building the catalog."
+            title={searchQuery ? `No products match "${searchQuery}"` : "No products yet"}
+            description={searchQuery ? "Try searching for a different keyword or SKU." : "Add your first product to start building the catalog."}
             action={
-              <Link href="/admin/products/new" className={buttonVariants({ size: "sm" })}>
-                Add Product
-              </Link>
+              searchQuery ? (
+                <Link href="/admin/products" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  Clear Search
+                </Link>
+              ) : (
+                <Link href="/admin/products/new" className={buttonVariants({ size: "sm" })}>
+                  Add Product
+                </Link>
+              )
             }
           />
         }
