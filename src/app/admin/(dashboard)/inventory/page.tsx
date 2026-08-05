@@ -18,11 +18,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AdminSearchInput } from "@/app/admin/(dashboard)/_components/admin-search-input";
 import { cn } from "@/lib/cn";
 
+import type { ProductStatus } from "@/generated/prisma/client";
+
 interface InventoryRow {
   id: string;
   name: string;
   sku: string;
   categoryName: string;
+  productStatus: ProductStatus;
   tracked: boolean;
   quantityOnHand: number;
   reservedQuantity: number;
@@ -40,24 +43,16 @@ function getStockStatus(row: InventoryRow): StockStatusFilter {
   return "in_stock";
 }
 
-const STATUS_LABEL: Record<StockStatusFilter, string> = {
-  all: "All Records",
-  not_tracked: "Not Tracked",
-  out_of_stock: "Out of Stock",
-  low_stock: "Low Stock",
-  in_stock: "In Stock",
-};
-
-const STATUS_TONE: Record<StockStatusFilter, "neutral" | "brand" | "success" | "warning" | "danger" | "info"> = {
-  all: "neutral",
-  not_tracked: "neutral",
-  out_of_stock: "danger",
-  low_stock: "warning",
-  in_stock: "success",
+const PRODUCT_STATUS_TONE: Record<ProductStatus, "success" | "neutral" | "warning" | "danger"> = {
+  ACTIVE: "success",
+  DRAFT: "neutral",
+  HIDDEN: "neutral",
+  AVAILABLE_ON_ORDER: "warning",
+  OUT_OF_STOCK: "danger",
 };
 
 interface InventoryPageProps {
-  searchParams?: Promise<{ page?: string; status?: string; q?: string }>;
+  searchParams?: Promise<{ page?: string; status?: string; catalog?: string; q?: string }>;
 }
 
 export default async function InventoryPage({ searchParams }: Readonly<InventoryPageProps>) {
@@ -66,6 +61,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
   const resolvedSearchParams = await searchParams;
   const page = Number(resolvedSearchParams?.page) || 1;
   const activeStatus = (resolvedSearchParams?.status as StockStatusFilter) || "all";
+  const catalogFilter = resolvedSearchParams?.catalog || "all";
   const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [products, stats] = await Promise.all([getInventoryList(), getInventoryStats()]);
@@ -77,6 +73,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
       name: product.name,
       sku: product.sku,
       categoryName: product.category.name,
+      productStatus: product.status,
       tracked: item !== null,
       quantityOnHand: item?.quantityOnHand ?? 0,
       reservedQuantity: item?.reservedQuantity ?? 0,
@@ -86,17 +83,23 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
     };
   });
 
-  // Filter rows based on status tab & search query
+  // Filter rows based on status tab, catalog status, & search query
   const filteredRows = allRows.filter((row) => {
     const rowStatus = getStockStatus(row);
     const matchesStatus = activeStatus === "all" || rowStatus === activeStatus;
+    const matchesCatalog =
+      catalogFilter === "all" ||
+      (catalogFilter === "active" && row.productStatus === "ACTIVE") ||
+      (catalogFilter === "draft" && row.productStatus === "DRAFT");
+
     const matchesSearch =
       !searchQuery ||
       row.name.toLowerCase().includes(searchQuery) ||
       row.sku.toLowerCase().includes(searchQuery) ||
-      row.categoryName.toLowerCase().includes(searchQuery);
+      row.categoryName.toLowerCase().includes(searchQuery) ||
+      row.productStatus.toLowerCase().includes(searchQuery);
 
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesCatalog && matchesSearch;
   });
 
   const columns: DataListColumn<InventoryRow>[] = [
@@ -105,12 +108,17 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
       header: "Product & Category",
       render: (row) => (
         <div className="flex flex-col gap-0.5">
-          <Link
-            href={`/admin/inventory/${row.id}`}
-            className="font-semibold text-foreground hover:text-brand-600 transition-colors"
-          >
-            {row.name}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/inventory/${row.id}`}
+              className="font-semibold text-foreground hover:text-brand-600 transition-colors"
+            >
+              {row.name}
+            </Link>
+            <Badge tone={PRODUCT_STATUS_TONE[row.productStatus]}>
+              {row.productStatus.replaceAll("_", " ")}
+            </Badge>
+          </div>
           <span className="text-xs text-neutral-500">{row.categoryName}</span>
         </div>
       ),
@@ -265,36 +273,69 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <AdminSearchInput placeholder="Search inventory by product, SKU, or category..." />
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          {statusFilters.map((tab) => {
-            const isActive = activeStatus === tab.id;
-            return (
-              <Link
-                key={tab.id}
-                href={`/admin/inventory${tab.id === "all" ? (searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "") : `?status=${tab.id}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}`}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                  isActive
-                    ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
-                    : "bg-surface-muted text-neutral-600 hover:bg-surface-muted/80 dark:text-neutral-300",
-                )}
-              >
-                {tab.label}
-                {tab.count !== undefined && (
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200",
-                    )}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Catalog Publication Scope filter */}
+          <div className="flex items-center rounded-xl bg-surface-muted p-1 text-xs">
+            <Link
+              href={`/admin/inventory?catalog=all${activeStatus !== "all" ? `&status=${activeStatus}` : ""}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              className={cn(
+                "rounded-lg px-2.5 py-1 font-semibold transition-all",
+                catalogFilter === "all" ? "bg-surface text-foreground shadow-xs" : "text-neutral-500 hover:text-foreground",
+              )}
+            >
+              All Catalog
+            </Link>
+            <Link
+              href={`/admin/inventory?catalog=active${activeStatus !== "all" ? `&status=${activeStatus}` : ""}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              className={cn(
+                "rounded-lg px-2.5 py-1 font-semibold transition-all",
+                catalogFilter === "active" ? "bg-surface text-foreground shadow-xs" : "text-neutral-500 hover:text-foreground",
+              )}
+            >
+              Active Storefront
+            </Link>
+            <Link
+              href={`/admin/inventory?catalog=draft${activeStatus !== "all" ? `&status=${activeStatus}` : ""}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              className={cn(
+                "rounded-lg px-2.5 py-1 font-semibold transition-all",
+                catalogFilter === "draft" ? "bg-surface text-foreground shadow-xs" : "text-neutral-500 hover:text-foreground",
+              )}
+            >
+              Drafts
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {statusFilters.map((tab) => {
+              const isActive = activeStatus === tab.id;
+              return (
+                <Link
+                  key={tab.id}
+                  href={`/admin/inventory${tab.id === "all" ? (catalogFilter !== "all" ? `?catalog=${catalogFilter}` : "") : `?status=${tab.id}${catalogFilter !== "all" ? `&catalog=${catalogFilter}` : ""}`}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                    isActive
+                      ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
+                      : "bg-surface-muted text-neutral-600 hover:bg-surface-muted/80 dark:text-neutral-300",
+                  )}
+                >
+                  {tab.label}
+                  {tab.count !== undefined && (
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200",
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
