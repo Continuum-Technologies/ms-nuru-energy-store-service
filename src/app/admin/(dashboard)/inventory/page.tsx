@@ -69,6 +69,21 @@ const PRODUCT_STATUS_TONE: Record<ProductStatus, "success" | "neutral" | "warnin
   ARCHIVED: "neutral",
 };
 
+function buildInventoryUrl(params: { catalog?: string; status?: string; q?: string }): string {
+  const searchParams = new URLSearchParams();
+  if (params.catalog && params.catalog !== "all") {
+    searchParams.set("catalog", params.catalog);
+  }
+  if (params.status && params.status !== "all") {
+    searchParams.set("status", params.status);
+  }
+  if (params.q) {
+    searchParams.set("q", params.q);
+  }
+  const queryString = searchParams.toString();
+  return queryString ? `/admin/inventory?${queryString}` : "/admin/inventory";
+}
+
 interface InventoryPageProps {
   searchParams?: Promise<{ page?: string; status?: string; catalog?: string; q?: string }>;
 }
@@ -295,7 +310,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
           {/* Catalog Publication Scope filter */}
           <div className="flex items-center rounded-xl bg-surface-muted p-1 text-xs">
             <Link
-              href={`/admin/inventory?catalog=all${activeStatus !== "all" ? `&status=${activeStatus}` : ""}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              href={buildInventoryUrl({ catalog: "all", status: activeStatus, q: searchQuery })}
               className={cn(
                 "rounded-lg px-2.5 py-1 font-semibold transition-all",
                 catalogFilter === "all" ? "bg-surface text-foreground shadow-xs" : "text-neutral-500 hover:text-foreground",
@@ -304,7 +319,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
               All Catalog
             </Link>
             <Link
-              href={`/admin/inventory?catalog=active${activeStatus !== "all" ? `&status=${activeStatus}` : ""}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              href={buildInventoryUrl({ catalog: "active", status: activeStatus, q: searchQuery })}
               className={cn(
                 "rounded-lg px-2.5 py-1 font-semibold transition-all",
                 catalogFilter === "active" ? "bg-surface text-foreground shadow-xs" : "text-neutral-500 hover:text-foreground",
@@ -313,7 +328,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
               Active Storefront
             </Link>
             <Link
-              href={`/admin/inventory?catalog=draft${activeStatus !== "all" ? `&status=${activeStatus}` : ""}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              href={buildInventoryUrl({ catalog: "draft", status: activeStatus, q: searchQuery })}
               className={cn(
                 "rounded-lg px-2.5 py-1 font-semibold transition-all",
                 catalogFilter === "draft" ? "bg-surface text-foreground shadow-xs" : "text-neutral-500 hover:text-foreground",
@@ -329,7 +344,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
               return (
                 <Link
                   key={tab.id}
-                  href={`/admin/inventory${tab.id === "all" ? (catalogFilter !== "all" ? `?catalog=${catalogFilter}` : "") : `?status=${tab.id}${catalogFilter !== "all" ? `&catalog=${catalogFilter}` : ""}`}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+                  href={buildInventoryUrl({ catalog: catalogFilter, status: tab.id, q: searchQuery })}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
                     isActive
