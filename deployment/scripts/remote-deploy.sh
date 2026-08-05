@@ -23,6 +23,11 @@ set +a
 
 if [[ -n "${DEPLOY_TAG}" ]]; then
   export NURU_VERSION="${DEPLOY_TAG}"
+elif [[ -z "${NURU_VERSION:-}" ]]; then
+  DETECTED_TAG=$(docker service inspect nuru-energy_nuru-web --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' 2>/dev/null | sed -E 's/.*:([^@]+).*/\1/' || true)
+  if [[ -n "${DETECTED_TAG}" ]]; then
+    export NURU_VERSION="${DETECTED_TAG}"
+  fi
 fi
 
 echo "[remote-deploy] Deploying nuru-energy with NURU_VERSION=${NURU_VERSION:-latest}..."

@@ -24,7 +24,12 @@ source .env
 set +a
 
 IMAGE="${DOCKER_IMAGE:-shamirj/nuru-energy-store}"
-TAG="${NURU_VERSION:-latest}"
+if [[ -z "${NURU_VERSION:-}" ]]; then
+  DETECTED_TAG=$(docker service inspect nuru-energy_nuru-web --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' 2>/dev/null | sed -E 's/.*:([^@]+).*/\1/' || true)
+  TAG="${DETECTED_TAG:-latest}"
+else
+  TAG="${NURU_VERSION}"
+fi
 MIGRATOR_IMAGE="${IMAGE}:migrate-${TAG}"
 DATABASE_URL="postgresql://nuru:${POSTGRES_PASSWORD}@postgres:5432/nuru_db?schema=nuru"
 
