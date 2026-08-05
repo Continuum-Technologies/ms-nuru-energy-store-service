@@ -33,11 +33,11 @@ export default async function AdminDashboardLayout({ children }: Readonly<{ chil
   ).map((item) => item.href);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans antialiased">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-background font-sans antialiased">
       <TopHeader user={session.user} />
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-border/80 bg-surface/60 backdrop-blur-xs md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-border/80 bg-surface/60 backdrop-blur-xs md:flex h-full">
           <SidebarNav visibleHrefs={visibleHrefs} badges={badges} />
           <UserPanel user={session.user} />
         </aside>
