@@ -112,12 +112,13 @@ async function seedBrandsFromCsv() {
       seoDescription: row.seoDescription || null,
     };
 
-    const created = await db.brand.upsert({
-      where: { slug: brandData.slug },
-      update: brandData,
-      create: brandData,
-    });
-    brandMap.set(created.slug, created.id);
+    const existing = await db.brand.findUnique({ where: { slug: brandData.slug } });
+    if (!existing) {
+      const created = await db.brand.create({ data: brandData });
+      brandMap.set(created.slug, created.id);
+    } else {
+      brandMap.set(existing.slug, existing.id);
+    }
   }
 
   console.log(`✓ Seeded ${records.length} Brands from CSV.`);
@@ -137,7 +138,7 @@ async function seedCategoriesFromCsv() {
 
   const categoryMap = new Map<string, string>();
 
-  // Pass 1: Upsert all categories without parentId
+  // Pass 1: Create categories if they don't exist yet
   for (const row of records) {
     const categoryData = {
       name: row.name,
@@ -152,22 +153,26 @@ async function seedCategoriesFromCsv() {
       canonicalUrl: row.canonicalUrl || null,
     };
 
-    const created = await db.category.upsert({
-      where: { slug: categoryData.slug },
-      update: categoryData,
-      create: categoryData,
-    });
-    categoryMap.set(created.slug, created.id);
+    const existing = await db.category.findUnique({ where: { slug: categoryData.slug } });
+    if (!existing) {
+      const created = await db.category.create({ data: categoryData });
+      categoryMap.set(created.slug, created.id);
+    } else {
+      categoryMap.set(existing.slug, existing.id);
+    }
   }
 
   // Pass 2: Connect parent categories if parentSlug is set
   for (const row of records) {
     if (row.parentSlug && categoryMap.has(row.parentSlug)) {
       const parentId = categoryMap.get(row.parentSlug)!;
-      await db.category.update({
-        where: { slug: row.slug },
-        data: { parentId },
-      });
+      const currentCat = await db.category.findUnique({ where: { slug: row.slug } });
+      if (currentCat && !currentCat.parentId) {
+        await db.category.update({
+          where: { slug: row.slug },
+          data: { parentId },
+        });
+      }
     }
   }
 
@@ -225,43 +230,34 @@ async function seedProductsFromCsv(brandMap: Map<string, string>, categoryMap: M
       publishedAt: new Date(),
     };
 
-    const product = await db.product.upsert({
-      where: { slug: productData.slug },
-      update: productData,
-      create: productData,
-    });
+    const existingProduct = await db.product.findUnique({ where: { slug: productData.slug } });
+    let product = existingProduct;
 
-    const invItem = await db.inventoryItem.upsert({
-      where: { productId: product.id },
-      update: {
-        quantityOnHand,
-        reorderLevel: 5,
-        lowStockThreshold: 3,
-      },
-      create: {
-        productId: product.id,
-        quantityOnHand,
-        reorderLevel: 5,
-        lowStockThreshold: 3,
-      },
-    });
+    if (!existingProduct) {
+      product = await db.product.create({ data: productData });
 
-    const existingMovements = await db.inventoryMovement.count({
-      where: { inventoryItemId: invItem.id },
-    });
-
-    if (existingMovements === 0 && quantityOnHand > 0) {
-      await db.inventoryMovement.create({
+      const invItem = await db.inventoryItem.create({
         data: {
-          inventoryItemId: invItem.id,
           productId: product.id,
-          type: InventoryMovementType.OPENING_STOCK,
-          quantityChange: quantityOnHand,
-          previousQuantity: 0,
-          newQuantity: quantityOnHand,
-          reason: "CSV Seed initial stock",
+          quantityOnHand,
+          reorderLevel: 5,
+          lowStockThreshold: 3,
         },
       });
+
+      if (quantityOnHand > 0) {
+        await db.inventoryMovement.create({
+          data: {
+            inventoryItemId: invItem.id,
+            productId: product.id,
+            type: InventoryMovementType.OPENING_STOCK,
+            quantityChange: quantityOnHand,
+            previousQuantity: 0,
+            newQuantity: quantityOnHand,
+            reason: "CSV Seed initial stock",
+          },
+        });
+      }
     }
   }
 

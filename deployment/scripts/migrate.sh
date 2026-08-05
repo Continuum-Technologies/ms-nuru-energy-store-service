@@ -34,13 +34,5 @@ docker run --rm \
   -e DATABASE_URL="${DATABASE_URL}" \
   "${MIGRATOR_IMAGE}"
 
-echo "[migrate] Seeding Owner account (no-op if OWNER_EMAIL already has an account)..."
-docker run --rm \
-  --network nuru-energy_nuru-data \
-  -e DATABASE_URL="${DATABASE_URL}" \
-  -e OWNER_EMAIL="${OWNER_EMAIL}" \
-  -e OWNER_PASSWORD="${OWNER_PASSWORD}" \
-  --entrypoint npx \
-  "${MIGRATOR_IMAGE}" prisma db seed
+echo "[migrate] Schema sync complete. (To seed CSV products/brands, run ./scripts/seed.sh manually)."
 
-echo "[migrate] Done."
