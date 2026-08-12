@@ -18,34 +18,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "nuruenergy.co.ke",
-        pathname: "/**",
+        hostname: "**",
       },
       {
         protocol: "http",
-        hostname: "localhost",
-        pathname: "/**",
+        hostname: "**",
       },
-      {
-        protocol: "http",
-        hostname: "127.0.0.1",
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
-        hostname: "rustfs",
-        pathname: "/**",
-      },
-      ...(process.env.RUSTFS_PUBLIC_URL
-        ? [
-            {
-              protocol: new URL(process.env.RUSTFS_PUBLIC_URL).protocol.replace(":", "") as "http" | "https",
-              hostname: new URL(process.env.RUSTFS_PUBLIC_URL).hostname,
-              port: new URL(process.env.RUSTFS_PUBLIC_URL).port || undefined,
-              pathname: "/**",
-            },
-          ]
-        : []),
     ],
   },
 };
