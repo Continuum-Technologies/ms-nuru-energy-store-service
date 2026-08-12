@@ -17,10 +17,35 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: rustfsPublicUrl.protocol.replace(":", "") as "http" | "https",
-        hostname: rustfsPublicUrl.hostname,
-        port: rustfsPublicUrl.port || undefined,
+        protocol: "https",
+        hostname: "nuruenergy.co.ke",
+        pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "rustfs",
+        pathname: "/**",
+      },
+      ...(process.env.RUSTFS_PUBLIC_URL
+        ? [
+            {
+              protocol: new URL(process.env.RUSTFS_PUBLIC_URL).protocol.replace(":", "") as "http" | "https",
+              hostname: new URL(process.env.RUSTFS_PUBLIC_URL).hostname,
+              port: new URL(process.env.RUSTFS_PUBLIC_URL).port || undefined,
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
 };

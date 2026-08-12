@@ -114,7 +114,7 @@ export function HomepageHero() {
             </p>
           </div>
           <Link
-            href="/solutions/water-pumping"
+            href="/shop?category=water-pumps"
             className="inline-flex items-center gap-1 text-xs font-bold text-success-700 dark:text-success-200 pt-3 hover:underline"
           >
             <span>View Solar Pump Kits</span>
