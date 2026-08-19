@@ -7,6 +7,7 @@ export interface PriceDisplayProps {
   hidePrice?: boolean;
   isQuotationOnly?: boolean;
   size?: "sm" | "lg";
+  stacked?: boolean;
   className?: string;
 }
 
@@ -22,18 +23,45 @@ export function PriceDisplay({
   hidePrice,
   isQuotationOnly,
   size = "sm",
+  stacked = false,
   className,
 }: Readonly<PriceDisplayProps>) {
   if (hidePrice || isQuotationOnly) {
     return (
-      <span className={cn("font-bold text-foreground", size === "lg" ? "text-lg" : "text-sm", className)}>
-        Contact for pricing
-      </span>
+      <div className={cn(stacked && "h-10 flex flex-col justify-center", className)}>
+        <span className={cn("font-bold text-foreground", size === "lg" ? "text-lg" : "text-sm")}>
+          Contact for pricing
+        </span>
+      </div>
     );
   }
 
   const hasDiscount = previousPrice !== null && previousPrice !== undefined && previousPrice > sellingPrice;
   const discountPercent = hasDiscount ? Math.round((1 - sellingPrice / previousPrice!) * 100) : null;
+
+  if (stacked) {
+    return (
+      <div className={cn("h-10 flex flex-col justify-center", className)}>
+        <span className="text-sm font-extrabold text-foreground leading-tight">
+          {formatKes(sellingPrice)}
+        </span>
+        {hasDiscount ? (
+          <div className="flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] text-neutral-400 line-through">
+              {formatKes(previousPrice!)}
+            </span>
+            <span className="rounded-pill bg-danger-50 px-1 py-0.5 text-[9px] font-bold text-danger-700 dark:bg-danger-600/15 dark:text-danger-200">
+              -{discountPercent}%
+            </span>
+          </div>
+        ) : (
+          <span className="invisible text-[11px] leading-none select-none" aria-hidden="true">
+            &nbsp;
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-wrap items-baseline gap-2", className)}>

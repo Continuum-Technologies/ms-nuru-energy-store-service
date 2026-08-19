@@ -30,9 +30,9 @@ export async function DealsOfTheDay() {
         </Link>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+      <div className="flex items-stretch gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
         {deals.map((product) => (
-          <div key={product.id} className="w-44 shrink-0 snap-start sm:w-52">
+          <div key={product.id} className="flex w-44 shrink-0 snap-start flex-col sm:w-52">
             <ProductCard product={product} />
           </div>
         ))}

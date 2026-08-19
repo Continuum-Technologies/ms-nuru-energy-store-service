@@ -23,9 +23,9 @@ export function ProductCard({ product }: Readonly<ProductCardProps>) {
   const canAddToCart = !product.isQuotationOnly && !product.hidePrice;
 
   return (
-    <div className="group flex flex-col gap-3 rounded-2xl border border-border/80 bg-surface p-3 transition-all duration-200 hover:-translate-y-1 hover:border-brand-500/50 hover:shadow-md">
-      <Link href={`/products/${product.slug}`} className="flex flex-col gap-3">
-        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-surface-muted">
+    <div className="group flex h-full flex-col justify-between rounded-2xl border border-border/80 bg-surface p-3 transition-all duration-200 hover:-translate-y-1 hover:border-brand-500/50 hover:shadow-md">
+      <Link href={`/products/${product.slug}`} className="flex flex-1 flex-col gap-2.5">
+        <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-xl bg-surface-muted">
           {image ? (
             <Image
               src={image.url}
@@ -41,9 +41,11 @@ export function ProductCard({ product }: Readonly<ProductCardProps>) {
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          {product.brand && <span className="text-[10px] font-bold uppercase tracking-wide text-neutral-400">{product.brand.name}</span>}
-          <h3 className="line-clamp-2 text-sm font-bold text-foreground group-hover:text-brand-600 transition-colors">
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="block h-3.5 text-[10px] font-bold uppercase tracking-wide text-neutral-400 truncate">
+            {product.brand?.name ?? ""}
+          </span>
+          <h3 className="line-clamp-2 h-10 text-sm font-bold leading-5 text-foreground transition-colors group-hover:text-brand-600">
             {product.name}
           </h3>
           <PriceDisplay
@@ -51,11 +53,12 @@ export function ProductCard({ product }: Readonly<ProductCardProps>) {
             previousPrice={product.previousPrice ? Number(product.previousPrice) : null}
             hidePrice={product.hidePrice}
             isQuotationOnly={product.isQuotationOnly}
+            stacked
           />
         </div>
       </Link>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-border/40 pt-2.5">
         <StockBadge status={status} />
         {canAddToCart && <AddToCartButton productId={product.id} variant="icon" />}
       </div>
