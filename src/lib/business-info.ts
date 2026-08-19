@@ -7,7 +7,7 @@
  */
 export const BUSINESS_INFO = {
   name: "Nuru Energy Store",
-  phone: "+254 700 000 000",
+  phone: "+254 719 375 096",
   email: "info@nuruenergy.co.ke",
   address: "Nairobi Store • Countrywide Delivery across Kenya",
 } as const;

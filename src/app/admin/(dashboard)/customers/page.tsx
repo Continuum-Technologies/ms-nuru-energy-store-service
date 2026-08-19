@@ -40,8 +40,15 @@ interface CustomerRow {
   createdAt: Date;
 }
 
-export default async function CustomersPage() {
+interface CustomersPageProps {
+  searchParams?: Promise<{ page?: string; q?: string }>;
+}
+
+export default async function CustomersPage({ searchParams }: Readonly<CustomersPageProps>) {
   await requirePermissionOrRedirect("customers.view");
+
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
 
   const [customers, stats] = await Promise.all([getCustomersList(), getCustomerStats()]);
 
@@ -219,6 +226,8 @@ export default async function CustomersPage() {
 
       {/* Main Data Directory */}
       <DataList
+        page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

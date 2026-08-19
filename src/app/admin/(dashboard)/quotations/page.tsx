@@ -38,8 +38,15 @@ interface QuotationRow {
   createdAt: Date;
 }
 
-export default async function QuotationsPage() {
+interface QuotationsPageProps {
+  searchParams?: Promise<{ page?: string; q?: string }>;
+}
+
+export default async function QuotationsPage({ searchParams }: Readonly<QuotationsPageProps>) {
   await requirePermissionOrRedirect("quotations.view");
+
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
 
   const [quotations, stats] = await Promise.all([
     getQuotationsList(),
@@ -197,6 +204,8 @@ export default async function QuotationsPage() {
 
       {/* Main Quotations Data List */}
       <DataList
+        page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

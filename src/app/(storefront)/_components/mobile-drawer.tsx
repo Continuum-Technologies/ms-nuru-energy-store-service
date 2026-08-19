@@ -85,14 +85,14 @@ export function MobileDrawer({ categoryLinks }: Readonly<MobileDrawerProps>) {
               </p>
               <div className="mt-2 flex gap-2">
                 <a
-                  href="tel:+254700000000"
+                  href="tel:+254719375096"
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-control border border-border bg-surface py-2 text-xs font-semibold text-foreground shadow-2xs"
                 >
                   <Phone className="h-3.5 w-3.5 text-brand-600" />
                   Call Us
                 </a>
                 <a
-                  href="https://wa.me/254700000000"
+                  href="https://wa.me/254719375096"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-control bg-success-600 py-2 text-xs font-semibold text-white shadow-2xs"

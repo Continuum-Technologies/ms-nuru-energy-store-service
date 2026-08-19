@@ -203,6 +203,7 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
 
       <DataList
         page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

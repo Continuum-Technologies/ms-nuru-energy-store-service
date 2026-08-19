@@ -375,6 +375,7 @@ export default async function InventoryPage({ searchParams }: Readonly<Inventory
       {/* Inventory Data List */}
       <DataList
         page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={filteredRows}
         rowKey={(row) => row.id}

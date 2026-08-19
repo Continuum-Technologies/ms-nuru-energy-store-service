@@ -65,7 +65,7 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
     return (
       row.name.toLowerCase().includes(searchQuery) ||
       row.slug.toLowerCase().includes(searchQuery) ||
-      (row.parentName && row.parentName.toLowerCase().includes(searchQuery))
+      (row.parentName?.toLowerCase().includes(searchQuery))
     );
   });
 
@@ -158,6 +158,7 @@ export default async function CategoriesPage({ searchParams }: Readonly<Categori
 
       <DataList
         page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

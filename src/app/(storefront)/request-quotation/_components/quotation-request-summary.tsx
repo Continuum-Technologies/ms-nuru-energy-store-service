@@ -121,7 +121,7 @@ export function QuotationRequestSummary({ items, heading }: Readonly<QuotationRe
         <div className="mt-1 flex items-center justify-between border-t border-brand-500/20 pt-2.5 text-foreground font-semibold">
           <span className="flex items-center gap-1.5 text-[11px]">
             <PhoneCall className="h-3.5 w-3.5 text-brand-600" />
-            +254 700 000 000
+            +254 719 375 096
           </span>
           <span className="text-[10px] text-neutral-500">Mon - Sat: 8am - 6pm</span>
         </div>

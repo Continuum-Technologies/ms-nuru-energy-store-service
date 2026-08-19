@@ -66,7 +66,7 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
     return (
       row.name.toLowerCase().includes(searchQuery) ||
       row.slug.toLowerCase().includes(searchQuery) ||
-      (row.countryOfOrigin && row.countryOfOrigin.toLowerCase().includes(searchQuery))
+      (row.countryOfOrigin?.toLowerCase().includes(searchQuery))
     );
   });
 
@@ -166,6 +166,7 @@ export default async function BrandsPage({ searchParams }: Readonly<BrandsPagePr
 
       <DataList
         page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

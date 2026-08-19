@@ -86,9 +86,9 @@ export default async function OrdersPage({ searchParams }: Readonly<OrdersPagePr
     return (
       row.orderNumber.toLowerCase().includes(searchQuery) ||
       row.customerName.toLowerCase().includes(searchQuery) ||
-      (row.customerPhone && row.customerPhone.toLowerCase().includes(searchQuery)) ||
-      (row.customerEmail && row.customerEmail.toLowerCase().includes(searchQuery)) ||
-      (row.quotationNumber && row.quotationNumber.toLowerCase().includes(searchQuery))
+      (row.customerPhone?.toLowerCase().includes(searchQuery)) ||
+      (row.customerEmail?.toLowerCase().includes(searchQuery)) ||
+      (row.quotationNumber?.toLowerCase().includes(searchQuery))
     );
   });
 
@@ -259,6 +259,7 @@ export default async function OrdersPage({ searchParams }: Readonly<OrdersPagePr
       {/* Main Data Table */}
       <DataList
         page={page}
+        searchParams={resolvedSearchParams}
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

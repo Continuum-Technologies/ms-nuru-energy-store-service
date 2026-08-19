@@ -46,14 +46,14 @@ function StorefrontHeaderView({
 
           <div className="flex items-center gap-4">
             <a
-              href="tel:+254700000000"
+              href="tel:+254719375096"
               className="flex items-center gap-1 font-semibold text-brand-300 transition-colors hover:text-white"
             >
               <Phone className="h-3 w-3" />
-              <span>+254 700 000 000</span>
+              <span>+254 719 375 096</span>
             </a>
             <a
-              href="https://wa.me/254700000000"
+              href="https://wa.me/254719375096"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden rounded-full bg-success-600 px-2.5 py-0.5 font-bold text-white transition-colors hover:bg-success-700 sm:inline-flex"

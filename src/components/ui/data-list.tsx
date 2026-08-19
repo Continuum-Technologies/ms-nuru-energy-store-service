@@ -23,6 +23,38 @@ export interface DataListProps<T> {
   emptyState?: ReactNode;
   pageSize?: number;
   page?: number;
+  searchParams?: Record<string, string | string[] | undefined>;
+  basePath?: string;
+}
+
+function buildPageHref(
+  targetPage: number,
+  searchParams?: Record<string, string | string[] | undefined>,
+  basePath?: string,
+): string {
+  const params = new URLSearchParams();
+  if (searchParams) {
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (!value || key === "page") continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          if (v) params.append(key, v);
+        }
+      } else {
+        params.set(key, value);
+      }
+    }
+  }
+
+  if (targetPage > 1) {
+    params.set("page", String(targetPage));
+  } else if (!params.toString()) {
+    return basePath || "?page=1";
+  }
+
+  const query = params.toString();
+  const prefix = basePath ?? "";
+  return query ? `${prefix}?${query}` : prefix || "?page=1";
 }
 
 // Renders as a real table on desktop and stacked cards on mobile (PRD §19.3 —
@@ -37,6 +69,8 @@ export function DataList<T>({
   emptyState,
   pageSize = 15,
   page = 1,
+  searchParams,
+  basePath,
 }: Readonly<DataListProps<T>>) {
   if (rows.length === 0 && emptyState) {
     return <>{emptyState}</>;
@@ -124,7 +158,7 @@ export function DataList<T>({
           <div className="flex items-center gap-1.5 self-end sm:self-auto">
             {safePage > 1 ? (
               <Link
-                href={`?page=${safePage - 1}`}
+                href={buildPageHref(safePage - 1, searchParams, basePath)}
                 className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 text-xs font-bold gap-1" })}
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -143,7 +177,7 @@ export function DataList<T>({
 
             {safePage < totalPages ? (
               <Link
-                href={`?page=${safePage + 1}`}
+                href={buildPageHref(safePage + 1, searchParams, basePath)}
                 className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 text-xs font-bold gap-1" })}
               >
                 Next

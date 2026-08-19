@@ -28,7 +28,7 @@ export function StorefrontFooter() {
               </Button>
             </Link>
             <a
-              href="https://wa.me/254700000000"
+              href="https://wa.me/254719375096"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-control bg-success-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-success-700"
@@ -61,7 +61,7 @@ export function StorefrontFooter() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 shrink-0 text-brand-400" />
-                <span>+254 700 000 000 / +254 711 000 000</span>
+                <span>+254 719 375 096</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 shrink-0 text-brand-400" />
