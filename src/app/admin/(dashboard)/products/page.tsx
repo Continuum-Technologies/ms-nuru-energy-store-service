@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Package, FileEdit, CheckCircle2, PackageX, ExternalLink, X } from "lucide-react";
+import { Plus, Package, FileEdit, CheckCircle2, PackageX, ExternalLink, X, ImageOff } from "lucide-react";
 import { db } from "@/infrastructure/database/client";
 import { requirePermissionOrRedirect } from "@/lib/permissions";
 import { deleteProduct } from "@/modules/catalog/products/actions";
@@ -39,6 +39,8 @@ interface ProductRow {
   sellingPrice: number;
   status: ProductStatus;
   quantityOnHand: number | null;
+  primaryImageUrl: string | null;
+  imageCount: number;
 }
 
 async function getProductStats() {
@@ -57,6 +59,7 @@ interface ProductsPageProps {
     status?: string;
     category?: string;
     brand?: string;
+    image?: string;
     q?: string;
   }>;
 }
@@ -73,7 +76,7 @@ const STATUS_FILTERS: { id: ProductStatusFilter; label: string }[] = [
 
 function buildStatusFilterHref(
   statusId: ProductStatusFilter,
-  currentParams?: { category?: string; brand?: string; q?: string },
+  currentParams?: { category?: string; brand?: string; image?: string; q?: string },
 ): string {
   const params = new URLSearchParams();
   if (statusId !== "all") {
@@ -84,6 +87,9 @@ function buildStatusFilterHref(
   }
   if (currentParams?.brand && currentParams.brand !== "all") {
     params.set("brand", currentParams.brand);
+  }
+  if (currentParams?.image && currentParams.image !== "all") {
+    params.set("image", currentParams.image);
   }
   if (currentParams?.q) {
     params.set("q", currentParams.q);
@@ -100,6 +106,7 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
   const activeStatus = (resolvedSearchParams?.status as ProductStatusFilter) || "all";
   const categoryFilter = resolvedSearchParams?.category || "all";
   const brandFilter = resolvedSearchParams?.brand || "all";
+  const imageFilter = resolvedSearchParams?.image || "all";
   const searchQuery = (resolvedSearchParams?.q || "").toLowerCase().trim();
 
   const [products, categories, brands, stats] = await Promise.all([
@@ -108,6 +115,10 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
         category: { select: { id: true, name: true, slug: true } },
         brand: { select: { id: true, name: true, slug: true } },
         inventoryItem: { select: { quantityOnHand: true } },
+        images: {
+          select: { id: true, url: true, isPrimary: true },
+          orderBy: [{ isPrimary: "desc" }, { displayOrder: "asc" }],
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -146,9 +157,11 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
     sellingPrice: Number(product.sellingPrice),
     status: product.status,
     quantityOnHand: product.inventoryItem?.quantityOnHand ?? null,
+    primaryImageUrl: product.images[0]?.url ?? null,
+    imageCount: product.images.length,
   }));
 
-  // Filter products by search query, status tab, category, and brand
+  // Filter products by search query, status tab, category, brand, and image presence
   const rows = allRows.filter((row) => {
     const matchesStatus =
       activeStatus === "all" ||
@@ -163,24 +176,73 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
       brandFilter === "all" ||
       (row.brandId && (row.brandId === brandFilter || row.brandSlug === brandFilter));
 
+    const matchesImage =
+      imageFilter === "all" ||
+      (imageFilter === "uploaded" ? row.imageCount > 0 : row.imageCount === 0);
+
     const matchesSearch =
       !searchQuery ||
       row.name.toLowerCase().includes(searchQuery) ||
       row.sku.toLowerCase().includes(searchQuery) ||
       row.categoryName.toLowerCase().includes(searchQuery) ||
-      (row.brandName && row.brandName.toLowerCase().includes(searchQuery)) ||
+      (row.brandName?.toLowerCase().includes(searchQuery)) ||
       row.status.toLowerCase().includes(searchQuery);
 
-    return matchesStatus && matchesCategory && matchesBrand && matchesSearch;
+    return matchesStatus && matchesCategory && matchesBrand && matchesImage && matchesSearch;
   });
 
   const hasActiveFilters =
-    activeStatus !== "all" || categoryFilter !== "all" || brandFilter !== "all" || searchQuery !== "";
+    activeStatus !== "all" ||
+    categoryFilter !== "all" ||
+    brandFilter !== "all" ||
+    imageFilter !== "all" ||
+    searchQuery !== "";
 
   const columns: DataListColumn<ProductRow>[] = [
     {
+      key: "image",
+      header: "Image",
+      hideOnMobile: true,
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          {row.primaryImageUrl ? (
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-border bg-surface-muted">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={row.primaryImageUrl}
+                alt={row.name}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          ) : (
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-dashed border-border bg-surface-muted text-neutral-400"
+              title="No image uploaded"
+            >
+              <ImageOff className="h-4 w-4" />
+            </div>
+          )}
+          <Badge
+            tone={row.imageCount > 0 ? "success" : "neutral"}
+            className="text-[11px] px-1.5 py-0 whitespace-nowrap"
+          >
+            {row.imageCount > 0 ? (
+              <>
+                <CheckCircle2 className="h-3 w-3 text-success-600 dark:text-success-400" />
+                <span>{row.imageCount} {row.imageCount === 1 ? "img" : "imgs"}</span>
+              </>
+            ) : (
+              <span className="text-neutral-500">None</span>
+            )}
+          </Badge>
+        </div>
+      ),
+    },
+    {
       key: "name",
       header: "Product",
+      hideOnMobile: true,
       render: (row) => (
         <div className="flex flex-col gap-0.5">
           <Link href={`/admin/products/${row.id}/edit`} className="font-semibold text-foreground hover:text-brand-600 transition-colors">
@@ -293,7 +355,7 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
         <KpiCard title="Out of Stock" value={stats.outOfStock} subtitle={stats.outOfStock > 0 ? "Replenish Now" : "All Available"} icon={<PackageX className="h-4 w-4 sm:h-5 sm:w-5" />} tone="danger" />
       </div>
 
-      {/* Toolbar: Search input, Category & Brand Dropdown Filters, and Status Tabs */}
+      {/* Toolbar: Search input, Category, Brand & Image Filters, and Status Tabs */}
       <div className="flex flex-col gap-3 rounded-xl border border-border/80 bg-surface/70 p-3 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
@@ -301,18 +363,27 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
               placeholder={`Search ${products.length} products by name, SKU, brand...`}
               className="w-full sm:max-w-xs"
             />
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
               <AdminFilterSelect
                 paramName="category"
                 allLabel="All Categories"
                 options={categoryOptions}
-                className="w-full sm:w-44"
+                className="w-full sm:w-40"
               />
               <AdminFilterSelect
                 paramName="brand"
                 allLabel="All Brands"
                 options={brandOptions}
                 className="w-full sm:w-36"
+              />
+              <AdminFilterSelect
+                paramName="image"
+                allLabel="All Images"
+                options={[
+                  { value: "uploaded", label: "Has Image" },
+                  { value: "missing", label: "No Image" },
+                ]}
+                className="col-span-2 sm:col-auto w-full sm:w-32"
               />
             </div>
             {hasActiveFilters && (
@@ -321,7 +392,7 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
                 className={buttonVariants({
                   variant: "ghost",
                   size: "sm",
-                  className: "h-9 px-2 text-xs text-neutral-500 hover:text-foreground gap-1 shrink-0",
+                  className: "h-9 px-2 text-xs text-neutral-500 hover:text-foreground gap-1 shrink-0 self-start sm:self-auto",
                 })}
               >
                 <X className="h-3.5 w-3.5" />
@@ -331,7 +402,7 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pt-1 lg:pt-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-1 lg:pt-0">
             {STATUS_FILTERS.map((tab) => {
               const isActive = activeStatus === tab.id;
               return (
@@ -340,10 +411,11 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
                   href={buildStatusFilterHref(tab.id, {
                     category: categoryFilter,
                     brand: brandFilter,
+                    image: imageFilter,
                     q: searchQuery,
                   })}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap",
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                     isActive
                       ? "bg-brand-600 text-brand-50 shadow-2xs dark:bg-brand-500"
                       : "bg-surface-muted text-neutral-600 hover:bg-neutral-200/70 hover:text-foreground dark:text-neutral-300 dark:hover:bg-neutral-800",
@@ -363,12 +435,41 @@ export default async function ProductsPage({ searchParams }: Readonly<ProductsPa
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
-        mobileTitle={(row) => row.name}
+        mobileTitle={(row) => (
+          <div className="flex items-start gap-3">
+            {row.primaryImageUrl ? (
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={row.primaryImageUrl}
+                  alt={row.name}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border bg-surface-muted text-neutral-400">
+                <ImageOff className="h-5 w-5" />
+              </div>
+            )}
+            <div className="flex flex-col min-w-0 flex-1">
+              <Link
+                href={`/admin/products/${row.id}/edit`}
+                className="font-semibold text-foreground hover:text-brand-600 transition-colors text-sm leading-snug line-clamp-2"
+              >
+                {row.name}
+              </Link>
+              <span className="text-[11px] font-mono text-neutral-400 mt-0.5 truncate">
+                SKU: {row.sku}
+              </span>
+            </div>
+          </div>
+        )}
         mobileAccessory={(row) => <Badge tone={STATUS_TONE[row.status]}>{row.status.replaceAll("_", " ")}</Badge>}
         emptyState={
           <EmptyState
             title={hasActiveFilters ? "No products match current filters" : "No products yet"}
-            description={hasActiveFilters ? "Try clearing or changing your search keywords, category, brand, or status filter." : "Add your first product to start building the catalog."}
+            description={hasActiveFilters ? "Try clearing or changing your search keywords, category, brand, image, or status filter." : "Add your first product to start building the catalog."}
             action={
               hasActiveFilters ? (
                 <Link href="/admin/products" className={buttonVariants({ variant: "outline", size: "sm" })}>

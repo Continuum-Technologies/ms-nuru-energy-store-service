@@ -213,7 +213,7 @@ async function seedProductsFromCsv(brandMap: Map<string, string>, categoryMap: M
       model: row.model || null,
       shortDescription: row.shortDescription || null,
       fullDescription: row.fullDescription || null,
-      status: (row.status as ProductStatus) || ProductStatus.ACTIVE,
+      status: (row.status as ProductStatus) || ProductStatus.DRAFT,
       sellingPrice: Number.parseFloat(row.sellingPrice || "0"),
       previousPrice: row.previousPrice ? Number.parseFloat(row.previousPrice) : null,
       costPrice: row.costPrice ? Number.parseFloat(row.costPrice) : null,
@@ -288,13 +288,6 @@ async function seedProductsFromCsv(brandMap: Map<string, string>, categoryMap: M
   console.log(`✓ Seeded Products & Inventory from CSV.`);
 }
 
-async function activateAllDraftProducts() {
-  const result = await db.product.updateMany({
-    where: { status: "DRAFT" },
-    data: { status: "ACTIVE" },
-  });
-  console.log(`✓ Activated ${result.count} products from DRAFT to ACTIVE.`);
-}
 
 async function seedSolutionPages() {
   console.log("🌱 Seeding Solution Pages...");
@@ -686,10 +679,9 @@ async function main() {
   const brandMap = await seedBrandsFromCsv();
   const categoryMap = await seedCategoriesFromCsv();
   await seedProductsFromCsv(brandMap, categoryMap);
-  await activateAllDraftProducts();
   await seedSolutionPages();
   await seedStaticAndPolicyPages();
-  console.log("✅ Seed, activation, solutions and policy pages completed successfully!");
+  console.log("✅ Seed, solutions and policy pages completed successfully!");
 }
 
 main()

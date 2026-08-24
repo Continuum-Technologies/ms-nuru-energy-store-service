@@ -129,19 +129,28 @@ export function DataList<T>({
       <div className="flex flex-col gap-3 md:hidden">
         {currentRows.map((row) => (
           <div key={rowKey(row)} className="rounded-card border border-border bg-surface p-4 shadow-card">
-            <div className="flex items-start justify-between gap-2">
-              <div className="font-medium text-foreground">{mobileTitle(row)}</div>
-              {mobileAccessory?.(row)}
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex-1 min-w-0 font-medium text-foreground">{mobileTitle(row)}</div>
+              {mobileAccessory && <div className="shrink-0 pt-0.5">{mobileAccessory(row)}</div>}
             </div>
             <dl className="mt-2 flex flex-col gap-1">
               {columns
                 .filter((column) => !column.hideOnMobile)
-                .map((column) => (
-                  <div key={column.key} className="flex items-center justify-between gap-2 text-sm">
-                    <dt className="text-neutral-500">{column.header}</dt>
-                    <dd className="text-foreground">{column.render(row)}</dd>
-                  </div>
-                ))}
+                .map((column) => {
+                  if (!column.header) {
+                    return (
+                      <div key={column.key} className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-end gap-1.5">
+                        {column.render(row)}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={column.key} className="flex items-center justify-between gap-2 text-sm">
+                      <dt className="text-neutral-500">{column.header}</dt>
+                      <dd className="text-foreground">{column.render(row)}</dd>
+                    </div>
+                  );
+                })}
             </dl>
           </div>
         ))}
