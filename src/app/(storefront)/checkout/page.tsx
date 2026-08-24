@@ -6,7 +6,7 @@ import { CheckoutForm } from "./_components/checkout-form";
 import { CheckoutStepper } from "../_components/checkout-stepper";
 
 export const metadata: Metadata = {
-  title: "Checkout | Nuru Energy Store",
+  title: "Checkout | Nuru Energy",
   robots: { index: false, follow: false },
 };
 

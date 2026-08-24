@@ -3,6 +3,7 @@ import { Zap, Phone, Search, ShoppingBag, FileText, MapPin, ShieldCheck } from "
 import { Button } from "@/components/ui/button";
 import { getActiveCategories } from "@/modules/catalog/queries";
 import { getCartItemCount } from "@/modules/cart/queries";
+import { getStoreSettings } from "@/modules/settings/queries";
 import { MobileDrawer } from "./mobile-drawer";
 
 // Individual categories are browsed via /shop's filter sidebar and the
@@ -11,23 +12,43 @@ import { MobileDrawer } from "./mobile-drawer";
 // This top-level strip stays a small, fixed set of destinations.
 const NAV_LINKS = [
   { href: "/shop", label: "All Equipment" },
+  { href: "/categories", label: "Categories" },
   { href: "/solutions", label: "Shop by Solution" },
   { href: "/request-quotation", label: "Request Quote" },
-  { href: "/contact", label: "Contact Us" },
+  { href: "/about", label: "About Us" },
+  { href: "/contact", label: "Contact" },
 ];
 
 /** Category links are queried live (for the mobile drawer's category drilldown) so they never point at one that doesn't exist. */
 export async function StorefrontHeader() {
-  const [categories, cartItemCount] = await Promise.all([getActiveCategories(), getCartItemCount()]);
+  const [categories, cartItemCount, settings] = await Promise.all([
+    getActiveCategories(),
+    getCartItemCount(),
+    getStoreSettings(),
+  ]);
   const categoryLinks = categories.map((category) => ({ href: `/categories/${category.slug}`, label: category.name }));
 
-  return <StorefrontHeaderView categoryLinks={categoryLinks} cartItemCount={cartItemCount} />;
+  return (
+    <StorefrontHeaderView
+      categoryLinks={categoryLinks}
+      cartItemCount={cartItemCount}
+      phone={settings.phone}
+      whatsapp={settings.whatsapp}
+    />
+  );
 }
 
 function StorefrontHeaderView({
   categoryLinks,
   cartItemCount,
-}: Readonly<{ categoryLinks: { href: string; label: string }[]; cartItemCount: number }>) {
+  phone,
+  whatsapp,
+}: Readonly<{
+  categoryLinks: { href: string; label: string }[];
+  cartItemCount: number;
+  phone: string | null;
+  whatsapp: string | null;
+}>) {
   return (
     <header className="sticky top-0 z-40 w-full flex-col border-b border-border/80 bg-surface/95 backdrop-blur-md">
       {/* Top Utility & Contact Bar */}
@@ -45,21 +66,25 @@ function StorefrontHeaderView({
           </div>
 
           <div className="flex items-center gap-4">
-            <a
-              href="tel:+254719375096"
-              className="flex items-center gap-1 font-semibold text-brand-300 transition-colors hover:text-white"
-            >
-              <Phone className="h-3 w-3" />
-              <span>+254 719 375 096</span>
-            </a>
-            <a
-              href="https://wa.me/254719375096"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden rounded-full bg-success-600 px-2.5 py-0.5 font-bold text-white transition-colors hover:bg-success-700 sm:inline-flex"
-            >
-              WhatsApp Us
-            </a>
+            {phone && (
+              <a
+                href={`tel:${phone.replace(/\s+/g, "")}`}
+                className="flex items-center gap-1 font-semibold text-brand-300 transition-colors hover:text-white"
+              >
+                <Phone className="h-3 w-3" />
+                <span>{phone}</span>
+              </a>
+            )}
+            {whatsapp && (
+              <a
+                href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden rounded-full bg-success-600 px-2.5 py-0.5 font-bold text-white transition-colors hover:bg-success-700 sm:inline-flex"
+              >
+                WhatsApp Us
+              </a>
+            )}
           </div>
         </div>
       </div>

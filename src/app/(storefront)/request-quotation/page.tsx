@@ -5,7 +5,7 @@ import { QuotationRequestForm } from "./_components/quotation-request-form";
 import { QuotationRequestSummary, type QuotationRequestSummaryItem } from "./_components/quotation-request-summary";
 
 export const metadata: Metadata = {
-  title: "Request a Quotation | Nuru Energy Store",
+  title: "Request a Quotation | Nuru Energy",
   robots: { index: false, follow: false },
 };
 

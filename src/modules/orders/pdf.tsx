@@ -1,9 +1,10 @@
 import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { formatKes } from "@/lib/currency";
-import { BUSINESS_INFO } from "@/lib/business-info";
+import { getBusinessInfo } from "@/lib/business-info";
 import type { getOrderById } from "./queries";
 
 type OrderDetail = NonNullable<Awaited<ReturnType<typeof getOrderById>>>;
+type BusinessInfo = Awaited<ReturnType<typeof getBusinessInfo>>;
 
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#1a1a1a" },
@@ -33,7 +34,7 @@ function money(value: unknown): string {
   return formatKes(Number(value ?? 0));
 }
 
-function OrderPdfDocument({ order }: Readonly<{ order: OrderDetail }>) {
+function OrderPdfDocument({ order, businessInfo }: Readonly<{ order: OrderDetail; businessInfo: BusinessInfo }>) {
   const latestPayment = order.payments[order.payments.length - 1];
   const isPaid = latestPayment?.status === "SUCCESSFUL";
   const documentTitle = isPaid ? "RECEIPT" : "INVOICE";
@@ -47,10 +48,10 @@ function OrderPdfDocument({ order }: Readonly<{ order: OrderDetail }>) {
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.businessName}>{BUSINESS_INFO.name}</Text>
-            <Text style={styles.muted}>{BUSINESS_INFO.address}</Text>
-            <Text style={styles.muted}>{BUSINESS_INFO.phone}</Text>
-            <Text style={styles.muted}>{BUSINESS_INFO.email}</Text>
+            <Text style={styles.businessName}>{businessInfo.name}</Text>
+            <Text style={styles.muted}>{businessInfo.address}</Text>
+            <Text style={styles.muted}>{businessInfo.phone}</Text>
+            <Text style={styles.muted}>{businessInfo.email}</Text>
           </View>
           <View>
             <Text style={styles.title}>{documentTitle}</Text>
@@ -129,7 +130,7 @@ function OrderPdfDocument({ order }: Readonly<{ order: OrderDetail }>) {
         </View>
 
         <Text style={styles.footer}>
-          {BUSINESS_INFO.name} • {BUSINESS_INFO.phone} • {BUSINESS_INFO.email}
+          {businessInfo.name} • {businessInfo.phone} • {businessInfo.email}
         </Text>
       </Page>
     </Document>
@@ -137,5 +138,6 @@ function OrderPdfDocument({ order }: Readonly<{ order: OrderDetail }>) {
 }
 
 export async function renderOrderPdf(order: OrderDetail): Promise<Buffer> {
-  return renderToBuffer(<OrderPdfDocument order={order} />);
+  const businessInfo = await getBusinessInfo();
+  return renderToBuffer(<OrderPdfDocument order={order} businessInfo={businessInfo} />);
 }

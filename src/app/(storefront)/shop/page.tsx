@@ -8,7 +8,7 @@ import { Pagination } from "../_components/pagination";
 import { parseProductFilters, flattenSearchParams } from "../_lib/parse-product-search-params";
 
 export const metadata: Metadata = {
-  title: "Shop All Equipment | Nuru Energy Store",
+  title: "Shop All Equipment | Nuru Energy",
   description:
     "Browse solar panels, lithium batteries, hybrid inverters, silent diesel generators, solar borehole pumps and machinery equipment in stock in Kenya.",
   alternates: { canonical: "/shop" },
@@ -54,6 +54,8 @@ export default async function ShopPage({ searchParams }: Readonly<ShopPageProps>
     Boolean(filters.brandSlug) ||
     Boolean(filters.minPrice) ||
     Boolean(filters.maxPrice) ||
+    Boolean(filters.inStock) ||
+    Boolean(filters.onSale) ||
     Boolean(filters.q);
 
   return (
@@ -92,6 +94,26 @@ export default async function ShopPage({ searchParams }: Readonly<ShopPageProps>
             >
               <span>Brand: {activeBrandObj.name}</span>
               <X className="h-3.5 w-3.5 text-brand-700 dark:text-brand-200" />
+            </Link>
+          )}
+
+          {filters.inStock && (
+            <Link
+              href={removeFilterUrl("/shop", rawParams, "inStock")}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 dark:bg-brand-600/15 dark:text-brand-200"
+            >
+              <span>In Stock Only</span>
+              <X className="h-3.5 w-3.5 text-brand-700 dark:text-brand-200" />
+            </Link>
+          )}
+
+          {filters.onSale && (
+            <Link
+              href={removeFilterUrl("/shop", rawParams, "onSale")}
+              className="inline-flex items-center gap-1.5 rounded-full bg-danger-50 px-3 py-1 text-xs font-semibold text-danger-700 hover:bg-danger-100 dark:bg-danger-600/15 dark:text-danger-200"
+            >
+              <span>On Sale</span>
+              <X className="h-3.5 w-3.5 text-danger-700 dark:text-danger-200" />
             </Link>
           )}
 

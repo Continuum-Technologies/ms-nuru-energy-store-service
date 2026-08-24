@@ -1,4 +1,4 @@
-# Nuru Energy Store — Production Deployment
+# Nuru Energy — Production Deployment
 
 Standalone Docker Swarm stack. No dependency on any other Zaam repo or
 shared cluster — everything this app needs (reverse proxy + TLS, Postgres,

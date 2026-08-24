@@ -1,6 +1,6 @@
 # Implementation Plan - Modernize Storefront Cart (/cart)
 
-Upgrade the Nuru Energy Store storefront cart page (`/cart`) with a modern, high-converting layout featuring a checkout progress bar, rich item cards, trust badges, and delivery threshold indicators.
+Upgrade the Nuru Energy storefront cart page (`/cart`) with a modern, high-converting layout featuring a checkout progress bar, rich item cards, trust badges, and delivery threshold indicators.
 
 ## Proposed Changes
 

@@ -16,7 +16,7 @@ import { CartLineItem, type CartLineItemData } from "./_components/cart-line-ite
 import { CheckoutStepper } from "../_components/checkout-stepper";
 
 export const metadata: Metadata = {
-  title: "Your Cart | Nuru Energy Store",
+  title: "Your Cart | Nuru Energy",
   description: "Review your solar panels, inverters, batteries, and machinery equipment before checkout.",
   robots: { index: false, follow: false },
 };

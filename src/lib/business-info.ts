@@ -1,13 +1,17 @@
+import { getStoreSettings } from "@/modules/settings/queries";
+
 /**
- * Placeholder business contact info for the quotation PDF header — mirrors
- * the same values already shown in `storefront-footer.tsx`/the header's
- * contact bar rather than inventing new ones. There's no Settings/
- * BusinessSettings model yet; once one exists, this constant is what it
- * would replace.
+ * Business contact info for PDF headers (quotations/orders) — backed by
+ * `StoreSettings`, editable from /admin/settings. Falls back to sensible
+ * defaults for fields the owner hasn't filled in yet, so a fresh install's
+ * PDFs never render a blank header.
  */
-export const BUSINESS_INFO = {
-  name: "Nuru Energy Store",
-  phone: "+254 719 375 096",
-  email: "info@nuruenergy.co.ke",
-  address: "Nairobi Store • Countrywide Delivery across Kenya",
-} as const;
+export async function getBusinessInfo() {
+  const settings = await getStoreSettings();
+  return {
+    name: settings.businessName,
+    phone: settings.phone ?? "",
+    email: settings.email ?? "",
+    address: settings.address ?? "",
+  };
+}

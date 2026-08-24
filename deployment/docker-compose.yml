@@ -1,5 +1,5 @@
 # =============================================================================
-# Nuru Energy Store — standalone production Docker Swarm stack
+# Nuru Energy — standalone production Docker Swarm stack
 # =============================================================================
 # Fully self-contained: no dependency on any other Zaam repo or shared
 # cluster. Traefik terminates TLS (Let's Encrypt, HTTP-01) for

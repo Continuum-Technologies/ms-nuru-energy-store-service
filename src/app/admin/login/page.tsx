@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
 
         <div className="relative flex items-center gap-2 text-lg font-semibold">
           <Zap className="h-6 w-6" />
-          Nuru Energy Store
+          Nuru Energy
         </div>
 
         <div className="relative flex flex-col gap-6">
@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© {year} Nuru Energy Store</p>
+        <p className="relative text-xs text-white/50">© {year} Nuru Energy</p>
       </div>
 
       {/* Form panel */}
@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
         <div className="mx-auto flex w-full max-w-sm flex-col gap-8">
           <div className="flex items-center gap-2 text-lg font-semibold text-foreground md:hidden">
             <Zap className="h-6 w-6 text-brand-600" />
-            Nuru Energy Store
+            Nuru Energy
           </div>
 
           <div className="flex flex-col gap-1">
@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
             <Link href="/" className="hover:text-brand-600">
               ← Back to store
             </Link>
-            <p className="md:hidden">© {year} Nuru Energy Store</p>
+            <p className="md:hidden">© {year} Nuru Energy</p>
           </div>
         </div>
       </div>

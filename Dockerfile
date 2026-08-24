@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# Multi-stage production build for the Nuru Energy Store Next.js app.
+# Multi-stage production build for the Nuru Energy Next.js app.
 #
 # Why this is small: Prisma 7's `prisma-client` generator (see
 # prisma/schema/schema.prisma) is pure TypeScript — there's no Rust query

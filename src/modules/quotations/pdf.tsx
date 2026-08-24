@@ -1,9 +1,10 @@
 import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { formatKes } from "@/lib/currency";
-import { BUSINESS_INFO } from "@/lib/business-info";
+import { getBusinessInfo } from "@/lib/business-info";
 import type { getQuotationById } from "./queries";
 
 type QuotationDetail = NonNullable<Awaited<ReturnType<typeof getQuotationById>>>;
+type BusinessInfo = Awaited<ReturnType<typeof getBusinessInfo>>;
 
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#1a1a1a" },
@@ -33,7 +34,7 @@ function money(value: unknown): string {
   return formatKes(Number(value ?? 0));
 }
 
-function QuotationPdfDocument({ quotation }: Readonly<{ quotation: QuotationDetail }>) {
+function QuotationPdfDocument({ quotation, businessInfo }: Readonly<{ quotation: QuotationDetail; businessInfo: BusinessInfo }>) {
   const customerName = quotation.guestName ?? quotation.customer?.name ?? "Customer";
   const customerPhone = quotation.guestPhone ?? quotation.customer?.phone ?? "—";
   const customerEmail = quotation.guestEmail ?? quotation.customer?.email ?? null;
@@ -43,10 +44,10 @@ function QuotationPdfDocument({ quotation }: Readonly<{ quotation: QuotationDeta
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.businessName}>{BUSINESS_INFO.name}</Text>
-            <Text style={styles.muted}>{BUSINESS_INFO.address}</Text>
-            <Text style={styles.muted}>{BUSINESS_INFO.phone}</Text>
-            <Text style={styles.muted}>{BUSINESS_INFO.email}</Text>
+            <Text style={styles.businessName}>{businessInfo.name}</Text>
+            <Text style={styles.muted}>{businessInfo.address}</Text>
+            <Text style={styles.muted}>{businessInfo.phone}</Text>
+            <Text style={styles.muted}>{businessInfo.email}</Text>
           </View>
           <View>
             <Text style={styles.title}>QUOTATION</Text>
@@ -134,7 +135,7 @@ function QuotationPdfDocument({ quotation }: Readonly<{ quotation: QuotationDeta
         )}
 
         <Text style={styles.footer}>
-          {BUSINESS_INFO.name} • {BUSINESS_INFO.phone} • {BUSINESS_INFO.email}
+          {businessInfo.name} • {businessInfo.phone} • {businessInfo.email}
         </Text>
       </Page>
     </Document>
@@ -142,5 +143,6 @@ function QuotationPdfDocument({ quotation }: Readonly<{ quotation: QuotationDeta
 }
 
 export async function renderQuotationPdf(quotation: QuotationDetail): Promise<Buffer> {
-  return renderToBuffer(<QuotationPdfDocument quotation={quotation} />);
+  const businessInfo = await getBusinessInfo();
+  return renderToBuffer(<QuotationPdfDocument quotation={quotation} businessInfo={businessInfo} />);
 }

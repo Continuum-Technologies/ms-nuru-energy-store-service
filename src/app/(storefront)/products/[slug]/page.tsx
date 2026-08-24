@@ -25,8 +25,8 @@ export async function generateMetadata({ params }: Readonly<ProductPageProps>): 
   const product = await getProductBySlug(slug);
   if (!product) return {};
 
-  const title = product.seoTitle || `${product.name} Price in Kenya | Nuru Energy Store`;
-  const description = product.seoDescription || product.shortDescription || `${product.name} — available at Nuru Energy Store.`;
+  const title = product.seoTitle || `${product.name} Price in Kenya | Nuru Energy`;
+  const description = product.seoDescription || product.shortDescription || `${product.name} — available at Nuru Energy.`;
   const primaryImage = product.images[0];
 
   return {

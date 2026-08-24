@@ -11,6 +11,8 @@ const FOLDER_PERMISSIONS: Record<string, Permission> = {
   products: "products.edit",
   categories: "categories.manage",
   brands: "brands.manage",
+  banners: "content.manage",
+  settings: "settings.manage",
 };
 
 /**

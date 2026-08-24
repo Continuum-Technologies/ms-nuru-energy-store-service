@@ -1,38 +1,46 @@
 import Link from "next/link";
 import { Home, Sprout, Building2, Droplets, ArrowRight } from "lucide-react";
 
-const SOLUTIONS = [
+export const SOLUTIONS_CONFIG = [
   {
+    slug: "home-solar",
     title: "Home Solar Power Systems",
     desc: "Complete solar panel, hybrid inverter & lithium battery bundles designed to run lights, TVs, refrigerators, and water pumps.",
     icon: Home,
-    href: "/shop?category=inverters",
+    href: "/solutions/home-solar",
     badge: "Residential",
     tag: "Zero Electricity Bills",
+    categorySlugs: ["solar-power-kits", "solar-inverters", "solar-batteries", "solar-panels"],
   },
   {
+    slug: "farm-irrigation",
     title: "Farm & Irrigation Solar",
     desc: "Solar water pumping kits, borehole systems, and farm power for crop irrigation, livestock watering, and feed processing.",
     icon: Sprout,
-    href: "/shop?category=farm-tools",
+    href: "/solutions/farm-irrigation",
     badge: "Agricultural",
     tag: "High Flow Pumping",
+    categorySlugs: ["agriculture-machinery", "water-pumps", "petrol-water-pumps", "diesel-water-pumps"],
   },
   {
+    slug: "business-backup",
     title: "Office & Business Backup",
     desc: "Seamless power backup packages to keep POS systems, servers, computers, security cameras, and shop lighting running 24/7.",
     icon: Building2,
-    href: "/shop?category=solar-batteries",
+    href: "/solutions/business-backup",
     badge: "Commercial",
     tag: "Instant Switchover",
+    categorySlugs: ["generators", "silent-diesel-generators", "backup-power-kits", "solar-batteries"],
   },
   {
+    slug: "borehole-systems",
     title: "Borehole Water Systems",
     desc: "Submersible borehole pumps with automatic solar MPPT drive controllers, stainless steel cables, and tank float switches.",
     icon: Droplets,
-    href: "/shop?category=water-pumps",
+    href: "/solutions/borehole-systems",
     badge: "Water Pumping",
     tag: "Deep Well Sizing",
+    categorySlugs: ["submersible-borehole-pumps", "water-pumps", "delivery-suction-pipes"],
   },
 ];
 
@@ -49,7 +57,7 @@ export function ShopBySolution() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {SOLUTIONS.map((item) => {
+        {SOLUTIONS_CONFIG.map((item) => {
           const Icon = item.icon;
           return (
             <div
@@ -80,7 +88,7 @@ export function ShopBySolution() {
                   href={item.href}
                   className="flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
                 >
-                  <span>Learn More</span>
+                  <span>Explore Solution</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>

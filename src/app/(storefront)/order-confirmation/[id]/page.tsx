@@ -21,7 +21,7 @@ import { CheckoutStepper } from "../../_components/checkout-stepper";
 import { PrintReceiptButton } from "./_components/print-button";
 
 export const metadata: Metadata = {
-  title: "Order Confirmed | Nuru Energy Store",
+  title: "Order Confirmed | Nuru Energy",
   robots: { index: false, follow: false },
 };
 
@@ -255,7 +255,7 @@ export default async function OrderConfirmationPage({ params }: Readonly<OrderCo
             {/* Guarantee Footer */}
             <div className="border-t border-border/80 pt-3 flex items-center gap-2 text-[11px] text-neutral-500">
               <ShieldCheck className="h-4 w-4 text-success-600 shrink-0" />
-              <span>Official Nuru Energy Store Order Confirmation</span>
+              <span>Official Nuru Energy Order Confirmation</span>
             </div>
           </div>
         </div>

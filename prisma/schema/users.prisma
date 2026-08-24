@@ -32,6 +32,7 @@ model AdminUser {
   orderStatusChanges OrderStatusHistory[] @relation("OrderStatusChangedBy")
   recordedPayments   Payment[]            @relation("PaymentRecordedBy")
   preparedQuotations Quotation[]          @relation("QuotationPreparedBy")
+  settingsUpdates    StoreSettings[]      @relation("StoreSettingsUpdatedBy")
 
   @@map("admin_users")
   @@schema("nuru")

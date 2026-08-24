@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Sun, BatteryCharging, Zap, Wrench, ShieldCheck, ArrowRight, ChevronRight, FileText, Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { getActiveBanners } from "@/modules/content/queries";
 
 const SIDEBAR_CATEGORIES = [
   { label: "Solar & Renewable Energy", href: "/shop?category=solar-panels", icon: Sun },
@@ -12,7 +14,10 @@ const SIDEBAR_CATEGORIES = [
   { label: "Electricals & Wiring Cables", href: "/shop?category=accessories", icon: ShieldCheck },
 ];
 
-export function HomepageHero() {
+export async function HomepageHero() {
+  const banners = await getActiveBanners();
+  const banner = banners[0];
+
   return (
     <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Left Sidebar Category Navigation (Desktop) */}
@@ -42,32 +47,43 @@ export function HomepageHero() {
         </div>
       </div>
 
-      {/* Main Center Hero Banner */}
+      {/* Main Center Hero Banner — driven by /admin/website's active banners
+          when any exist, falling back to this default content otherwise. */}
       <div className="lg:col-span-6 flex flex-col">
         <div className="relative flex flex-1 flex-col justify-between overflow-hidden rounded-2xl border border-brand-500/20 bg-gradient-to-br from-neutral-900 via-neutral-950 to-brand-950/40 p-8 text-white shadow-md">
+          {banner?.imageUrl && (
+            <Image src={banner.imageUrl} alt="" fill unoptimized className="absolute inset-0 object-cover opacity-40" />
+          )}
           <div className="relative z-10 flex flex-col items-start gap-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1 text-xs font-bold text-brand-300">
               <Zap className="h-3.5 w-3.5" />
-              <span>Lithium Solar Systems & Backup Power</span>
+              <span>{banner?.subtitle ?? "Lithium Solar Systems & Backup Power"}</span>
             </div>
 
             <h1 className="text-2xl font-black tracking-tight sm:text-4xl text-white leading-tight">
-              Reliable Power Storage for Homes & Businesses Across Kenya
+              {banner?.title ?? "Reliable Power Storage for Homes & Businesses Across Kenya"}
             </h1>
 
-            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-xl">
-              High-performance mono solar panels, hybrid inverters, lithium batteries & backup generators — backed by expert sizing, site assessment, and fast delivery to all 47 counties.
-            </p>
+            {!banner && (
+              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-xl">
+                High-performance mono solar panels, hybrid inverters, lithium batteries & backup generators — backed by expert sizing, site assessment, and fast delivery to all 47 counties.
+              </p>
+            )}
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link href="/shop" className={buttonVariants({ size: "sm", className: "font-bold gap-2 bg-brand-500 text-neutral-950 hover:bg-brand-400" })}>
-                Browse Equipment
+              <Link
+                href={banner?.ctaHref ?? "/shop"}
+                className={buttonVariants({ size: "sm", className: "font-bold gap-2 bg-brand-500 text-neutral-950 hover:bg-brand-400" })}
+              >
+                {banner?.ctaLabel ?? "Browse Equipment"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/request-quotation" className={buttonVariants({ variant: "outline", size: "sm", className: "font-bold gap-2 text-white border-neutral-700 hover:bg-neutral-800" })}>
-                <FileText className="h-4 w-4 text-brand-400" />
-                Request Custom Quotation
-              </Link>
+              {!banner && (
+                <Link href="/request-quotation" className={buttonVariants({ variant: "outline", size: "sm", className: "font-bold gap-2 text-white border-neutral-700 hover:bg-neutral-800" })}>
+                  <FileText className="h-4 w-4 text-brand-400" />
+                  Request Custom Quotation
+                </Link>
+              )}
             </div>
           </div>
 

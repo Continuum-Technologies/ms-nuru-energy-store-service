@@ -1,0 +1,62 @@
+// Single-row global store configuration. No DB-level singleton constraint —
+// src/modules/settings/queries.ts's getStoreSettings() always reads the
+// first row and lazily creates one with defaults if none exists yet, so no
+// seed step is required.
+model StoreSettings {
+  id String @id @default(cuid())
+
+  // Business identity
+  businessName  String  @default(" Nuru Energy")
+  logoUrl       String?
+  phone         String?
+  whatsapp      String?
+  email         String?
+  address       String?
+  county        String?
+  businessHours String?
+  facebookUrl   String?
+  instagramUrl  String?
+  tiktokUrl     String?
+
+  // Commerce / tax
+  currency         String  @default("KES")
+  vatRate          Decimal @default(16.00) @db.Decimal(5, 2)
+  pricesIncludeVat Boolean @default(true)
+
+  // Delivery / collection / policy summaries — short display text. Full
+  // policy pages (delivery/return/warranty/privacy/terms/FAQ) are Page rows
+  // (prisma/schema/content.prisma); these seed defaults/snippets shown at
+  // checkout or in the quotation PDF terms block.
+  deliveryInfo          String?
+  collectionInfo        String?
+  warrantyPolicySummary String?
+  returnPolicySummary   String?
+  quotationTermsDefault String?
+
+  // Payment display details — gated separately from the rest of settings by
+  // the payments.settings.manage permission (Owner-only, see
+  // src/lib/permissions.ts), the "critical settings" PRD §29 calls out for
+  // extra protection.
+  mpesaPaybill      String?
+  mpesaTill         String?
+  bankName          String?
+  bankAccountName   String?
+  bankAccountNumber String?
+  bankBranch        String?
+
+  // Notifications & operational defaults
+  orderNotificationEmails  String? // comma-separated; a handful of recipients doesn't need its own table
+  lowStockThresholdDefault Int     @default(5)
+
+  // SEO defaults — per-entity overrides already exist on Product/Category/
+  // Brand/Page; these are the site-wide fallbacks.
+  seoTitleSuffix        String? @default("| Nuru Energy")
+  seoDefaultDescription String?
+
+  updatedAt   DateTime   @updatedAt
+  updatedBy   AdminUser? @relation("StoreSettingsUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedById String?
+
+  @@map("store_settings")
+  @@schema("nuru")
+}

@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Nuru Energy Store — Engineering & Business Reference
+# Nuru Energy — Engineering & Business Reference
 
 This file is the working reference for building this project. The full Product Design
 Requirements Document lives at [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md) — treat it as the source of truth for

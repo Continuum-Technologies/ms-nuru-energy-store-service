@@ -9,12 +9,13 @@ export interface RawProductSearchParams {
   sort?: string;
   page?: string;
   onSale?: string;
+  inStock?: string;
 }
 
-const VALID_SORTS: ProductSort[] = ["newest", "price-asc", "price-desc", "name-asc"];
+const VALID_SORTS: Set<ProductSort> = new Set(["newest", "price-asc", "price-desc", "name-asc"]);
 
 function isProductSort(value: string | undefined): value is ProductSort {
-  return VALID_SORTS.includes(value as ProductSort);
+  return VALID_SORTS.has(value as ProductSort);
 }
 
 /** Shared by /shop, /search, /categories/[slug] and /brands/[slug] — turns raw URL search params into typed query filters. */
@@ -28,6 +29,7 @@ export function parseProductFilters(searchParams: RawProductSearchParams): Produ
     sort: isProductSort(searchParams.sort) ? searchParams.sort : undefined,
     page: searchParams.page ? Number(searchParams.page) : undefined,
     onSale: searchParams.onSale === "true" || undefined,
+    inStock: searchParams.inStock === "true" || undefined,
   };
 }
 

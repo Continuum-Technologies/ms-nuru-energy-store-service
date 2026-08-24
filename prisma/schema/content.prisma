@@ -1,0 +1,51 @@
+enum PageType {
+  STATIC // About, Contact
+  POLICY // delivery/return/warranty/privacy/terms/FAQ
+  SOLUTION // /solutions/[slug]
+
+  @@schema("nuru")
+}
+
+model HomepageBanner {
+  id        String    @id @default(cuid())
+  title     String
+  subtitle  String?
+  imageUrl  String?
+  imageKey  String?
+  ctaLabel  String?
+  ctaHref   String?
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("homepage_banners")
+  @@schema("nuru")
+}
+
+// SEO fields follow the exact embedded pattern already used on
+// Category/Brand/Product (prisma/schema/catalog.prisma) — see CLAUDE.md
+// "Implementation conventions".
+model Page {
+  id          String   @id @default(cuid())
+  type        PageType
+  title       String
+  slug        String   @unique
+  body        String
+  isPublished Boolean  @default(false)
+
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  canonicalUrl   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@map("pages")
+  @@schema("nuru")
+}

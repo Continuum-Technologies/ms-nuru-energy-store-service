@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: Readonly<BrandPageProps>): Pr
   if (!brand) return {};
 
   return {
-    title: brand.seoTitle || `${brand.name} Products in Kenya | Nuru Energy Store`,
-    description: brand.seoDescription || brand.description || `Shop genuine ${brand.name} equipment at Nuru Energy Store.`,
+    title: brand.seoTitle || `${brand.name} Products in Kenya | Nuru Energy`,
+    description: brand.seoDescription || brand.description || `Shop genuine ${brand.name} equipment at Nuru Energy.`,
     alternates: { canonical: `/brands/${brand.slug}` },
   };
 }

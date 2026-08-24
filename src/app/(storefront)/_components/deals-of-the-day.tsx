@@ -3,9 +3,9 @@ import { Tag, ArrowRight } from "lucide-react";
 import { getDealProducts } from "@/modules/catalog/queries";
 import { ProductCard } from "./product-card";
 
-/** Real, currently-discounted products only — no fabricated countdown/urgency, since there's no deal-expiry data to back one (CLAUDE.md's "no fabricated claims" rule). Renders nothing when no product has a real markdown. */
+/** Real, currently-discounted products only in a balanced, full-width responsive grid. */
 export async function DealsOfTheDay() {
-  const deals = await getDealProducts(8);
+  const deals = await getDealProducts(6);
 
   if (deals.length === 0) {
     return null;
@@ -30,11 +30,9 @@ export async function DealsOfTheDay() {
         </Link>
       </div>
 
-      <div className="flex items-stretch gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {deals.map((product) => (
-          <div key={product.id} className="flex w-44 shrink-0 snap-start flex-col sm:w-52">
-            <ProductCard product={product} />
-          </div>
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </section>

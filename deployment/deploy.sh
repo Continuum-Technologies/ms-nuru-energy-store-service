@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Nuru Energy Store — first-time production bootstrap
+# Nuru Energy — first-time production bootstrap
 # =============================================================================
 # Idempotent: safe to re-run. Initialises Docker Swarm on this node (if not
 # already), creates the overlay networks, creates the host data directories,

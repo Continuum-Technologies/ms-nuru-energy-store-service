@@ -22,6 +22,7 @@ export interface ProductListFilters {
   page?: number;
   /** "On sale" is treated as `previousPrice` being set at all — the admin product form only ever sets it to record a genuine markdown from a higher original price, so presence alone is a reliable proxy without a field-to-field DB comparison. */
   onSale?: boolean;
+  inStock?: boolean;
 }
 
 const PRODUCT_CARD_SELECT = {
@@ -69,6 +70,7 @@ export async function getPublishedProducts(filters: ProductListFilters) {
     }),
     ...(filters.brandSlug && { brand: { slug: filters.brandSlug } }),
     ...(filters.onSale && { previousPrice: { not: null } }),
+    ...(filters.inStock && { inventoryItem: { quantityOnHand: { gt: 0 } } }),
     ...((filters.minPrice !== undefined || filters.maxPrice !== undefined) && {
       sellingPrice: {
         ...(filters.minPrice !== undefined && { gte: filters.minPrice }),
@@ -283,6 +285,48 @@ export async function getActiveBrands(): Promise<ActiveBrand[]> {
     .filter((brand) => brand.productCount > 0);
 }
 
+/** Fetch only brands that have active products in the specified category (or its children). */
+export async function getCategoryBrands(categorySlug: string): Promise<ActiveBrand[]> {
+  const brands = await db.brand.findMany({
+    where: {
+      isActive: true,
+      products: {
+        some: {
+          status: "ACTIVE",
+          category: {
+            OR: [{ slug: categorySlug }, { parent: { slug: categorySlug } }],
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      _count: {
+        select: {
+          products: {
+            where: {
+              status: "ACTIVE",
+              category: {
+                OR: [{ slug: categorySlug }, { parent: { slug: categorySlug } }],
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return brands.map((b) => ({
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+    productCount: b._count.products,
+  }));
+}
+
 /** A single active brand landing page — `null` (→ `notFound()`) if inactive or missing. */
 export async function getBrandBySlug(slug: string) {
   const brand = await db.brand.findUnique({ where: { slug } });
@@ -290,6 +334,24 @@ export async function getBrandBySlug(slug: string) {
     return null;
   }
   return brand;
+}
+
+/** Fetch active products matching a list of category slugs for a solution landing page */
+export async function getSolutionProducts(categorySlugs: string[], limit = 8) {
+  return db.product.findMany({
+    where: {
+      status: "ACTIVE",
+      category: {
+        OR: [
+          { slug: { in: categorySlugs } },
+          { parent: { slug: { in: categorySlugs } } },
+        ],
+      },
+    },
+    select: PRODUCT_CARD_SELECT,
+    orderBy: { publishedAt: "desc" },
+    take: limit,
+  });
 }
 
 /** Slug + updatedAt only, for sitemap.ts — never more than a published entity should expose. */

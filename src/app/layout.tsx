@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.SITE_URL),
-  title: "Nuru Energy Store",
+  title: " Nuru Energy",
   description: "Solar, power and machinery for Kenya.",
 };
 

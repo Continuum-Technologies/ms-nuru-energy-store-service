@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Manual Seed Script for Nuru Energy Store
+# Manual Seed Script for Nuru Energy
 #
 # Runs seeding as a one-off docker container against the migrator image.
 # Non-destructive: Existing products, brands, and categories in the database

@@ -12,7 +12,7 @@ interface SearchPageProps {
 export async function generateMetadata({ searchParams }: Readonly<SearchPageProps>): Promise<Metadata> {
   const { q } = flattenSearchParams(await searchParams);
   return {
-    title: q ? `Search results for "${q}" | Nuru Energy Store` : "Search | Nuru Energy Store",
+    title: q ? `Search results for "${q}" | Nuru Energy` : "Search | Nuru Energy",
   };
 }
 

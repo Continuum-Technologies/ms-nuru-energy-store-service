@@ -100,8 +100,8 @@ export function OrderActions({
   const canCancel = (CANCELLABLE_ORDER_STATUSES as readonly string[]).includes(status);
   const whatsappHref = customerPhone
     ? `https://wa.me/${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Hi! This is Nuru Energy Store regarding your order ${orderNumber}.`,
-      )}`
+      `Hi! This is Nuru Energy regarding your order ${orderNumber}.`,
+    )}`
     : null;
 
   return (

@@ -3,9 +3,10 @@ import { ArrowRight } from "lucide-react";
 import { getActiveCategories, getCategoryProductPreview } from "@/modules/catalog/queries";
 import { ProductCard } from "./product-card";
 
-const MAX_ROWS = 3;
+const MAX_ROWS = 4;
+const PRODUCTS_PER_ROW = 6;
 
-/** A "Category — real products" row per top-level category, matching the merchandising pattern from competitor storefronts but with only real, live catalog data — a category with an empty preview (a race with stock/status changes) is simply skipped, not padded with placeholders. */
+/** A "Category — real products" row per top-level category with a balanced, full-width responsive grid. */
 export async function CategoryProductRows() {
   const categories = await getActiveCategories();
   const candidates = categories.slice(0, MAX_ROWS);
@@ -13,7 +14,7 @@ export async function CategoryProductRows() {
   const rows = await Promise.all(
     candidates.map(async (category) => ({
       category,
-      products: await getCategoryProductPreview(category.slug, 6),
+      products: await getCategoryProductPreview(category.slug, PRODUCTS_PER_ROW),
     })),
   );
 
@@ -37,11 +38,9 @@ export async function CategoryProductRows() {
             </Link>
           </div>
 
-          <div className="flex items-stretch gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {products.map((product) => (
-              <div key={product.id} className="flex w-44 shrink-0 snap-start flex-col sm:w-52">
-                <ProductCard product={product} />
-              </div>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </section>

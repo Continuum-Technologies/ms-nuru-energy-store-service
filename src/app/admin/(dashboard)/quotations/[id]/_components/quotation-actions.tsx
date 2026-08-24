@@ -88,10 +88,9 @@ export function QuotationActions({
 
   const whatsappHref = guestPhone
     ? `https://wa.me/${guestPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Hi! Here is your quotation ${quotationNumber} from Nuru Energy Store${
-          total !== null ? ` — total ${formatKes(total)}` : ""
-        }. We'll send the PDF separately.`,
-      )}`
+      `Hi! Here is your quotation ${quotationNumber} from Nuru Energy${total !== null ? ` — total ${formatKes(total)}` : ""
+      }. We'll send the PDF separately.`,
+    )}`
     : null;
 
   let convertContent: React.ReactNode;

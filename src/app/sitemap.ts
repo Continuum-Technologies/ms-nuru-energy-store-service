@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getPublishedProductSlugs, getActiveCategorySlugs, getActiveBrandSlugs } from "@/modules/catalog/queries";
+import { getPublishedPageSlugs } from "@/modules/content/queries";
+import { publicPathForPage } from "@/modules/content/page-paths";
 import { env } from "@/lib/env";
 
 // Without this, sitemap.ts has no request-time API call so Next.js treats it
@@ -11,10 +13,11 @@ export const dynamic = "force-dynamic";
 
 /** Regenerated on every request from live, published-only data — never a static list (CLAUDE.md §10). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, categories, brands] = await Promise.all([
+  const [products, categories, brands, pages] = await Promise.all([
     getPublishedProductSlugs(),
     getActiveCategorySlugs(),
     getActiveBrandSlugs(),
+    getPublishedPageSlugs(),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -43,5 +46,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...productRoutes, ...categoryRoutes, ...brandRoutes];
+  const pageRoutes: MetadataRoute.Sitemap = pages.map((page) => ({
+    url: `${env.SITE_URL}${publicPathForPage(page.type, page.slug)}`,
+    lastModified: page.updatedAt,
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
+  return [...staticRoutes, ...productRoutes, ...categoryRoutes, ...brandRoutes, ...pageRoutes];
 }
