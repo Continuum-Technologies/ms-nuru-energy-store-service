@@ -8,6 +8,8 @@ import { UserPanel } from "./_components/user-panel";
 import { TopHeader } from "./_components/top-header";
 import { getOperationalStats } from "./_lib/operational-stats";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Layout for every authenticated `/admin` page. Redirects to `/admin/login`
  * if there's no valid session — this is the real authorization boundary

@@ -3,6 +3,8 @@ import { StorefrontFooter } from "./_components/storefront-footer";
 import { WhatsAppFloat } from "./_components/whatsapp-float";
 import { getStoreSettings } from "@/modules/settings/queries";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Structural shell for public storefront pages.
  * Integrates modern header with categories/search/contact, enterprise footer, and floating WhatsApp support.
