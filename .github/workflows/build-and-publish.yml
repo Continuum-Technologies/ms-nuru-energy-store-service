@@ -159,4 +159,5 @@ jobs:
           script: |
             cd ~/ms-nuru-energy-store-service/deployment 2>/dev/null || cd ~/nuru-energy-store-service/deployment
             git pull --ff-only
+            NURU_VERSION="${{ needs.build-and-push.outputs.version }}" ./scripts/migrate.sh
             NURU_VERSION="${{ needs.build-and-push.outputs.version }}" ./scripts/remote-deploy.sh
