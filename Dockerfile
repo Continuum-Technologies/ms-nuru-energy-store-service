@@ -22,6 +22,7 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
+RUN npm install -g npm@latest
 
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -31,6 +32,7 @@ RUN npm ci
 ################################################################################
 FROM node:22-alpine AS builder
 WORKDIR /app
+RUN npm install -g npm@latest
 
 COPY --from=deps /app/node_modules ./node_modules
 
