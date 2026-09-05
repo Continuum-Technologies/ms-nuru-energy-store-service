@@ -30,8 +30,15 @@ elif [[ -z "${NURU_VERSION:-}" ]]; then
   fi
 fi
 
+IMAGE="${DOCKER_IMAGE:-shamirj/nuru-energy-store}"
+
 echo "[remote-deploy] Deploying nuru-energy with NURU_VERSION=${NURU_VERSION:-latest}..."
 docker stack deploy --with-registry-auth --resolve-image=always -c docker-compose.yml nuru-energy
+
+if docker service inspect nuru-energy_nuru-web >/dev/null 2>&1; then
+  echo "[remote-deploy] Rolling out image ${IMAGE}:${NURU_VERSION:-latest} to nuru-energy_nuru-web..."
+  docker service update --image "${IMAGE}:${NURU_VERSION:-latest}" nuru-energy_nuru-web
+fi
 
 echo "[remote-deploy] Cleaning up dangling and old images..."
 docker image prune -af --filter "until=24h" 2>/dev/null || true
