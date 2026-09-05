@@ -1,0 +1,19 @@
+{
+  "name": "Nuru Energy",
+  "short_name": "Nuru Energy",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#eab308",
+  "background_color": "#0d1117",
+  "display": "standalone"
+}

@@ -9,7 +9,8 @@ model StoreSettings {
   businessName  String  @default(" Nuru Energy")
   logoUrl       String?
   phone         String?
-  whatsapp      String?
+  whatsapp                String?
+  whatsappOrderingEnabled Boolean @default(true)
   email         String?
   address       String?
   county        String?

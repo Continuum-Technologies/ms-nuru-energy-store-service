@@ -3,13 +3,14 @@
 import { useState, useRef, useTransition } from "react";
 import type { ChangeEvent } from "react";
 import Image from "next/image";
-import { Building2, ImageIcon, Upload, Trash2, Globe, Check } from "lucide-react";
+import { Building2, ImageIcon, Upload, Trash2, Globe, Check, MessageSquare, AlertTriangle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/spinner";
 import { KENYA_COUNTIES } from "@/lib/kenya-counties";
 import type { StoreSettingsFormValues } from "./store-settings-form";
@@ -264,6 +265,34 @@ export function BusinessInfoSection({
               defaultValue={settings.whatsapp ?? undefined}
             />
           </FormField>
+        </div>
+
+        {/* Storefront WhatsApp Ordering Toggle */}
+        <div className="rounded-xl border border-border/70 bg-neutral-50/60 dark:bg-neutral-900/30 p-4 flex flex-col gap-3">
+          <label className="flex items-start gap-3 text-sm font-medium text-foreground cursor-pointer select-none">
+            <Checkbox
+              id="whatsappOrderingEnabled"
+              name="whatsappOrderingEnabled"
+              defaultChecked={settings.whatsappOrderingEnabled}
+              className="mt-0.5"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold text-foreground flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                Enable Storefront WhatsApp Floating Button
+              </span>
+              <span className="text-xs text-neutral-500 font-normal leading-relaxed">
+                When enabled, a floating WhatsApp consultation & ordering button will be visible on the public storefront.
+              </span>
+            </div>
+          </label>
+
+          <div className="flex items-start gap-2 rounded-lg border border-warning-200 bg-warning-50/50 p-2.5 text-xs text-warning-700 dark:border-warning-800/50 dark:bg-warning-950/20 dark:text-warning-200">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-warning-600 dark:text-warning-400" />
+            <span>
+              This setting controls the floating storefront shortcut. Static WhatsApp contact details shown on the contact page or quotation PDFs remain active.
+            </span>
+          </div>
         </div>
 
         {/* Location & Hours */}

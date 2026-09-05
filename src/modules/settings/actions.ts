@@ -16,6 +16,7 @@ export async function updateStoreSettings(_prevState: SettingsFormState, formDat
     logoUrl: formData.get("logoUrl") || undefined,
     phone: formData.get("phone") || undefined,
     whatsapp: formData.get("whatsapp") || undefined,
+    whatsappOrderingEnabled: formData.get("whatsappOrderingEnabled") === "on",
     email: formData.get("email") || undefined,
     address: formData.get("address") || undefined,
     county: formData.get("county") || undefined,

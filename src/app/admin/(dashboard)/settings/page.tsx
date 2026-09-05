@@ -57,6 +57,7 @@ export default async function SettingsPage({
           logoUrl: settings.logoUrl,
           phone: settings.phone,
           whatsapp: settings.whatsapp,
+          whatsappOrderingEnabled: settings.whatsappOrderingEnabled,
           email: settings.email,
           address: settings.address,
           county: settings.county,

@@ -5,6 +5,7 @@ export const storeSettingsSchema = z.object({
   logoUrl: z.string().max(500).optional(),
   phone: z.string().max(50).optional(),
   whatsapp: z.string().max(50).optional(),
+  whatsappOrderingEnabled: z.coerce.boolean().default(true),
   email: z.string().email().max(200).optional().or(z.literal("")),
   address: z.string().max(500).optional(),
   county: z.string().max(100).optional(),

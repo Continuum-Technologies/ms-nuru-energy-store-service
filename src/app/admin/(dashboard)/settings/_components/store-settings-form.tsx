@@ -22,6 +22,7 @@ export interface StoreSettingsFormValues {
   logoUrl: string | null;
   phone: string | null;
   whatsapp: string | null;
+  whatsappOrderingEnabled: boolean;
   email: string | null;
   address: string | null;
   county: string | null;
